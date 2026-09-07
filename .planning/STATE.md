@@ -1,7 +1,7 @@
 # Project State
 
 **Current Phase:** 1
-**Status:** Planning
+**Status:** Ready for planning
 
 ## Project Reference
 
@@ -14,3 +14,4 @@ See: .planning/PROJECT.md (updated 2026-09-07)
 - .planning/PROJECT.md
 - .planning/ROADMAP.md
 - .planning/REQUIREMENTS.md
+- .planning/phases/1-setup-hotmart-webhooks/01-CONTEXT.md
