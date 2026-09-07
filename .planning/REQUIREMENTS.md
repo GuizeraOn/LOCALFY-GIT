@@ -30,11 +30,11 @@
 - [x] **DB-02**: Definir schema para armazenar logs e histórico de gastos por campanha/conta de anúncios.
 - [x] **DB-03**: Consolidar dados relacionais para consultas analíticas rápidas.
 
-### Frontend Dashboard
+### Frontend Dashboard & UI
 
-- [ ] **UI-01**: Exibir os cards consolidados das métricas principais (Faturamento, Lucro, ROAS, ROI, CPA).
-- [ ] **UI-02**: Exibir gráficos de desempenho ao longo do tempo (usando Recharts/Chart.js).
-- [ ] **UI-03**: Interface com atualização em tempo real ou botão de manual refresh (SWR/React Query).
+- [x] **UI-01**: Criar tela principal (Dashboard) para exibir Faturamento, Lucro, ROAS e CPA geral.
+- [x] **UI-02**: Exibir tabela de desempenho com detalhamento por Campanha.
+- [x] **UI-03**: Interface com botão "Atualizar Agora" que dispara a busca no Facebook e recarrega os dados.
 
 ## v2 Requirements
 
@@ -67,9 +67,9 @@
 | CALC-02 | Phase 3 | Complete |
 | CALC-03 | Phase 3 | Complete |
 | CALC-04 | Phase 3 | Complete |
-| UI-01 | Phase 4 | Pending |
-| UI-02 | Phase 4 | Pending |
-| UI-03 | Phase 4 | Pending |
+| UI-01 | Phase 4 | Complete |
+| UI-02 | Phase 4 | Complete |
+| UI-03 | Phase 4 | Complete |
 
 **Coverage:**
 - v1 requirements: 16 total
