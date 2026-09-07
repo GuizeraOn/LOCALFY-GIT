@@ -13,6 +13,7 @@ interface HeaderProps {
 
 export function DashboardHeader({ startDate, endDate, onDateChange, onSync }: HeaderProps) {
   const [isSyncing, setIsSyncing] = useState(false);
+  const [isSyncingHotmart, setIsSyncingHotmart] = useState(false);
 
   const handleSync = async () => {
     setIsSyncing(true);
@@ -32,6 +33,24 @@ export function DashboardHeader({ startDate, endDate, onDateChange, onSync }: He
     }
   };
 
+  const handleHotmartSync = async () => {
+    setIsSyncingHotmart(true);
+    try {
+      const res = await fetch('/api/sync/hotmart', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ startDate, endDate })
+      });
+      if (res.ok) {
+        onSync();
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsSyncingHotmart(false);
+    }
+  };
+
   return (
     <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4 border-b border-zinc-800 pb-4">
       <div>
@@ -45,6 +64,15 @@ export function DashboardHeader({ startDate, endDate, onDateChange, onSync }: He
           endDate={endDate}
           onChange={onDateChange}
         />
+
+        <button
+          onClick={handleHotmartSync}
+          disabled={isSyncingHotmart}
+          className="flex items-center justify-center bg-orange-500 text-white hover:bg-orange-600 px-4 py-2 rounded-lg font-medium text-sm transition-colors disabled:opacity-50"
+        >
+          <RefreshCw className={`w-4 h-4 mr-2 ${isSyncingHotmart ? 'animate-spin' : ''}`} />
+          {isSyncingHotmart ? 'Sincronizando...' : 'Sync Hotmart'}
+        </button>
 
         <button
           onClick={handleSync}
