@@ -1,6 +1,6 @@
 # Project Roadmap
 
-**4 phases** | **16 requirements mapped** | All v1 requirements covered ✓
+**5 phases** | **16 requirements mapped** | All v1 requirements covered ✓
 
 | # | Phase | Goal | Requirements | Success Criteria |
 |---|-------|------|--------------|------------------|
@@ -8,6 +8,7 @@
 | 2 | Facebook Ads & Cron | Recuperar custos de anúncios da API do FB em uma rotina periódica e salvar. | FB-01, FB-02, FB-03 | 2 |
 | 3 | Core Metrics Engine | Processar eventos de vendas e gastos para calcular as métricas exatas. | CALC-01, CALC-02, CALC-03, CALC-04 | 2 |
 | 4 | Dashboard UI | Exibir as informações consolidadas visualmente para o usuário com atualizações periódicas. | UI-01, UI-02, UI-03 | 2 |
+| 5 | Date Range Picker Avançado | Substituir o seletor de datas simples por um calendário interativo estilo Facebook, com opções predefinidas e seleção customizada. | UI-04 | 2 |
 
 ## Phase Details
 
@@ -40,3 +41,14 @@
 **Success criteria**:
 1. Dashboard Next.js carrega as métricas da API de cálculos (Phase 3).
 2. Gráfico e Cards são exibidos de forma responsiva.
+
+### Phase 5: Date Range Picker Avançado
+**Goal**: Substituir o seletor de datas simples por um calendário interativo estilo Facebook, com opções predefinidas e seleção customizada.
+**Requirements**: UI-04
+**UI hint**: yes
+**Depends on**: Phase 4
+**Success criteria**:
+1. O picker exibe um calendário duplo (dois meses lado a lado) para seleção de intervalo de datas.
+2. O componente possui atalhos predefinidos (Hoje, Ontem, Últimos 7 dias, Últimos 14 dias, Últimos 28 dias, Últimos 30 dias, Esta semana, Semana passada, Este mês, Mês passado, Máximo).
+3. É possível selecionar um intervalo customizado clicando em duas datas no calendário.
+4. A seleção atualiza automaticamente o dashboard com os novos dados.
