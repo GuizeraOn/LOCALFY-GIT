@@ -1,17 +1,17 @@
 # Project State
 
-**Current Phase:** 1
-**Status:** Complete
+**Current Phase:** 2
+**Status:** Ready for planning
 
 ## Project Reference
 
 See: .planning/PROJECT.md (updated 2026-09-07)
 
 **Core value:** Visibilidade em tempo real e de forma consolidada do lucro real e do ROAS, permitindo cruzar vendas da Hotmart (com rastreamento UTM) com os gastos do Facebook Ads.
-**Current focus:** Setup & Hotmart Webhooks (Complete)
+**Current focus:** Facebook Ads & Cron
 
 ## Context Links
 - .planning/PROJECT.md
 - .planning/ROADMAP.md
 - .planning/REQUIREMENTS.md
-- .planning/phases/1-setup-hotmart-webhooks/01-CONTEXT.md
+- .planning/phases/2-facebook-ads-cron/02-CONTEXT.md
