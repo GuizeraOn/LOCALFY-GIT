@@ -1,6 +1,6 @@
 # Project Roadmap
 
-**5 phases** | **16 requirements mapped** | All v1 requirements covered ✓
+**7 phases** | **18 requirements mapped** | v1 complete + v2 features in progress
 
 | # | Phase | Goal | Requirements | Success Criteria |
 |---|-------|------|--------------|------------------|
@@ -9,6 +9,8 @@
 | 3 | Core Metrics Engine | Processar eventos de vendas e gastos para calcular as métricas exatas. | CALC-01, CALC-02, CALC-03, CALC-04 | 2 |
 | 4 | Dashboard UI | Exibir as informações consolidadas visualmente para o usuário com atualizações periódicas. | UI-01, UI-02, UI-03 | 2 |
 | 5 | Date Range Picker Avançado | Substituir o seletor de datas simples por um calendário interativo estilo Facebook, com opções predefinidas e seleção customizada. | UI-04 | 2 |
+| 6 | Importação de Histórico Hotmart | Criar um endpoint e UI para importar o histórico de vendas passadas via API REST da Hotmart, não só os eventos futuros do webhook. | HOT-04 | 2 |
+| 7 | Filtro por Produto | Adicionar filtro de produto ao dashboard para visualizar métricas isoladas por produto vendido. | UI-05 | 2 |
 
 ## Phase Details
 
@@ -52,3 +54,23 @@
 2. O componente possui atalhos predefinidos (Hoje, Ontem, Últimos 7 dias, Últimos 14 dias, Últimos 28 dias, Últimos 30 dias, Esta semana, Semana passada, Este mês, Mês passado, Máximo).
 3. É possível selecionar um intervalo customizado clicando em duas datas no calendário.
 4. A seleção atualiza automaticamente o dashboard com os novos dados.
+
+### Phase 6: Importação de Histórico Hotmart
+**Goal**: Criar um endpoint e UI para importar o histórico de vendas passadas via API REST da Hotmart, não só os eventos futuros do webhook.
+**Requirements**: HOT-04
+**Depends on**: Phase 1
+**Success criteria**:
+1. Botão "Importar Histórico" no dashboard dispara chamada à API Hotmart de vendas passadas.
+2. O endpoint autentica via Bearer token na API REST da Hotmart e pagina os resultados.
+3. As vendas são salvas no banco com UPSERT (não duplica se rodar duas vezes).
+4. Uma barra de progresso ou feedback visual é exibido durante a importação.
+
+### Phase 7: Filtro por Produto
+**Goal**: Adicionar filtro de produto ao dashboard para visualizar métricas isoladas por produto vendido.
+**Requirements**: UI-05
+**Depends on**: Phase 4, Phase 6
+**Success criteria**:
+1. Um dropdown "Produto" aparece ao lado do date picker no topo do dashboard.
+2. Ao selecionar um produto, todos os cards (Faturamento, Lucro, ROAS, etc.) filtram somente pelas vendas daquele produto.
+3. A tabela de campanhas também reflete o filtro de produto.
+4. A opção "Todos os produtos" está disponível para voltar à visão global.
