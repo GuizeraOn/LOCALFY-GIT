@@ -7,9 +7,9 @@
 
 ### Integração Hotmart
 
-- [ ] **HOT-01**: Criar endpoint de webhook seguro para receber notificações da Hotmart.
-- [ ] **HOT-02**: Processar eventos de `PURCHASE_APPROVED`, `PURCHASE_REFUNDED`, `PURCHASE_CANCELED`.
-- [ ] **HOT-03**: Extrair e armazenar parâmetros UTM dos metadados/src da venda na Hotmart.
+- [x] **HOT-01**: Criar endpoint de webhook seguro para receber notificações da Hotmart.
+- [x] **HOT-02**: Processar eventos de `PURCHASE_APPROVED`, `PURCHASE_REFUNDED`, `PURCHASE_CANCELED`.
+- [x] **HOT-03**: Extrair e armazenar parâmetros UTM dos metadados/src da venda na Hotmart.
 
 ### Integração Facebook Ads
 
@@ -26,9 +26,9 @@
 
 ### Banco de Dados
 
-- [ ] **DB-01**: Definir schema para armazenar eventos de vendas.
-- [ ] **DB-02**: Definir schema para armazenar logs e histórico de gastos por campanha/conta de anúncios.
-- [ ] **DB-03**: Consolidar dados relacionais para consultas analíticas rápidas.
+- [x] **DB-01**: Definir schema para armazenar eventos de vendas.
+- [x] **DB-02**: Definir schema para armazenar logs e histórico de gastos por campanha/conta de anúncios.
+- [x] **DB-03**: Consolidar dados relacionais para consultas analíticas rápidas.
 
 ### Frontend Dashboard
 
@@ -54,12 +54,12 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| HOT-01 | Phase 1 | Pending |
-| HOT-02 | Phase 1 | Pending |
-| HOT-03 | Phase 1 | Pending |
-| DB-01 | Phase 1 | Pending |
-| DB-02 | Phase 1 | Pending |
-| DB-03 | Phase 1 | Pending |
+| HOT-01 | Phase 1 | Complete |
+| HOT-02 | Phase 1 | Complete |
+| HOT-03 | Phase 1 | Complete |
+| DB-01 | Phase 1 | Complete |
+| DB-02 | Phase 1 | Complete |
+| DB-03 | Phase 1 | Complete |
 | FB-01 | Phase 2 | Pending |
 | FB-02 | Phase 2 | Pending |
 | FB-03 | Phase 2 | Pending |
