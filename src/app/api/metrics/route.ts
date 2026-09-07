@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import { NextResponse } from 'next/server';
 import { supabaseServerClient } from '@/lib/supabase-server';
 import { calculateMetrics } from '@/lib/metrics';

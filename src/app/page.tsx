@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import useSWR from 'swr';
 import { format, subDays } from 'date-fns';
 import { DashboardHeader } from '@/components/DashboardHeader';
@@ -11,17 +11,31 @@ import { CampaignTable } from '@/components/CampaignTable';
 const fetcher = (url: string) => fetch(url).then(res => res.json());
 
 export default function Dashboard() {
-  const [startDate, setStartDate] = useState(format(subDays(new Date(), 7), 'yyyy-MM-dd'));
-  const [endDate, setEndDate] = useState(format(new Date(), 'yyyy-MM-dd'));
+  const [isMounted, setIsMounted] = useState(false);
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
 
-  const { data, mutate } = useSWR(`/api/metrics?startDate=${startDate}&endDate=${endDate}`, fetcher, {
-    refreshInterval: 60000 // auto refresh every minute
-  });
+  useEffect(() => {
+    setStartDate(format(subDays(new Date(), 7), 'yyyy-MM-dd'));
+    setEndDate(format(new Date(), 'yyyy-MM-dd'));
+    setIsMounted(true);
+  }, []);
+
+  // Avoid fetching with empty dates during SSR/initial render
+  const { data, mutate } = useSWR(
+    isMounted ? `/api/metrics?startDate=${startDate}&endDate=${endDate}` : null, 
+    fetcher, 
+    { refreshInterval: 60000 }
+  );
 
   const handleDateChange = (start: string, end: string) => {
     setStartDate(start);
     setEndDate(end);
   };
+
+  if (!isMounted) {
+    return <main className="max-w-7xl mx-auto p-4 md:p-8 flex justify-center items-center min-h-screen text-zinc-500">Carregando dashboard...</main>;
+  }
 
   return (
     <main className="max-w-7xl mx-auto p-4 md:p-8">

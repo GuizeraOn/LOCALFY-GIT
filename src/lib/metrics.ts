@@ -1,12 +1,16 @@
-export const PLATFORM_FEE_PERCENTAGE = parseFloat(process.env.NEXT_PUBLIC_PLATFORM_FEE || '0.10');
+export const AD_TAX_PERCENTAGE = parseFloat(process.env.NEXT_PUBLIC_AD_TAX_PERCENTAGE || '0.13');
 
 export function calculateMetrics(sales: any[], adSpends: any[], expenses: any[]) {
   // Global Metrics
   const approvedSales = sales.filter(s => s.status === 'APPROVED' || s.status === 'COMPLETED');
   
   const grossRevenue = approvedSales.reduce((acc, sale) => acc + Number(sale.price), 0);
-  const netRevenue = grossRevenue * (1 - PLATFORM_FEE_PERCENTAGE);
-  const totalAdSpend = adSpends.reduce((acc, ad) => acc + Number(ad.spend), 0);
+  const netRevenue = grossRevenue; // Sem desconto da Hotmart assumido aqui
+  
+  // O gasto total em ads recebe o imposto (ex: 13%)
+  const rawAdSpend = adSpends.reduce((acc, ad) => acc + Number(ad.spend), 0);
+  const totalAdSpend = rawAdSpend * (1 + AD_TAX_PERCENTAGE);
+  
   const totalExpenses = expenses.reduce((acc, exp) => acc + Number(exp.amount), 0);
   
   const profit = netRevenue - totalAdSpend - totalExpenses;
@@ -32,7 +36,8 @@ export function calculateMetrics(sales: any[], adSpends: any[], expenses: any[])
         grossRevenue: 0,
       };
     }
-    campaignStats[cid].spend += Number(ad.spend);
+    // Aplica o imposto no gasto da campanha também
+    campaignStats[cid].spend += Number(ad.spend) * (1 + AD_TAX_PERCENTAGE);
     campaignStats[cid].impressions += Number(ad.impressions);
     campaignStats[cid].clicks += Number(ad.clicks);
   });
@@ -48,7 +53,7 @@ export function calculateMetrics(sales: any[], adSpends: any[], expenses: any[])
 
   // Calculate campaign metrics
   const campaigns = Object.values(campaignStats).map(c => {
-    const cNetRevenue = c.grossRevenue * (1 - PLATFORM_FEE_PERCENTAGE);
+    const cNetRevenue = c.grossRevenue;
     const cProfit = cNetRevenue - c.spend;
     const cRoas = c.spend > 0 ? cNetRevenue / c.spend : 0;
     const cRoi = c.spend > 0 ? (cProfit / c.spend) * 100 : 0;
