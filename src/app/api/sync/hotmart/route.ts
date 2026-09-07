@@ -2,152 +2,189 @@ export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
 import { supabaseServerClient } from '@/lib/supabase-server';
+import {
+  buildSalesHistoryUrl,
+  mapHotmartItem,
+  dedupeMappedSales,
+  extractPageInfo,
+  type MappedHotmartSale,
+} from '@/lib/hotmart';
 
-interface HotmartSaleItem {
-  transaction: string;
-  product: {
-    id: number;
-    name: string;
-  };
-  purchase: {
-    approved_date: number;
-    price: {
-      value: number;
-    };
-    status: string;
-  };
-  tracking?: {
-    source?: string;
-    source_sck?: string;
-    external_code?: string;
-  };
+// ---------------------------------------------------------------------------
+// Local row type — keeps created_at optional so we can omit it when null
+// ---------------------------------------------------------------------------
+interface SaleRow {
+  transaction_id: string;
+  status: string;
+  price: number;
+  updated_at: string;
+  created_at?: string;
 }
 
-interface HotmartHistoryResponse {
-  items?: HotmartSaleItem[];
-  page_info?: {
-    next_page_token?: string;
-    results_per_page?: number;
-    total_results?: number;
-  };
+interface UtmRow {
+  transaction_id: string;
+  utm_source: string | null;
+  utm_campaign: string | null;
+  utm_medium: string | null;
+  utm_content: string | null;
+  utm_term: string | null;
 }
+
+// ---------------------------------------------------------------------------
+// Date validation
+// ---------------------------------------------------------------------------
+const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
 export async function POST(request: Request) {
   try {
-    const { startDate, endDate } = await request.json();
-
-    if (!startDate || !endDate) {
-      return NextResponse.json({ error: 'Missing startDate or endDate' }, { status: 400 });
+    // 1. Parse body defensively — an empty body is valid
+    let body: Record<string, unknown> = {};
+    try {
+      const parsed: unknown = await request.json();
+      if (parsed !== null && typeof parsed === 'object' && !Array.isArray(parsed)) {
+        body = parsed as Record<string, unknown>;
+      }
+    } catch {
+      // Empty or malformed body — treat as {}
     }
 
-    const HOTMART_ACCESS_TOKEN = process.env.HOTMART_ACCESS_TOKEN;
-
-    if (!HOTMART_ACCESS_TOKEN) {
+    // 2. Check token — never echo it
+    const token = process.env.HOTMART_ACCESS_TOKEN;
+    if (!token) {
       console.warn('Missing HOTMART_ACCESS_TOKEN environment variable.');
-      return NextResponse.json({ error: 'Server configuration error: HOTMART_ACCESS_TOKEN not set' }, { status: 500 });
+      return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
     }
 
-    // Convert dates to timestamps in milliseconds
-    const startTimestamp = new Date(startDate).getTime();
-    const endTimestamp = new Date(endDate).getTime();
+    // 3. Validate dates
+    const rawStart = typeof body.startDate === 'string' ? body.startDate : undefined;
+    const rawEnd = typeof body.endDate === 'string' ? body.endDate : undefined;
 
-    let totalUpserted = 0;
-    let totalFetched = 0;
-    let pageToken: string | undefined = undefined;
+    if (rawStart !== undefined && !DATE_RE.test(rawStart)) {
+      return NextResponse.json({ error: 'Invalid date format' }, { status: 400 });
+    }
+    if (rawEnd !== undefined && !DATE_RE.test(rawEnd)) {
+      return NextResponse.json({ error: 'Invalid date format' }, { status: 400 });
+    }
 
-    // Paginate through results
-    do {
-      const params = new URLSearchParams({
-        start_date: String(startTimestamp),
-        end_date: String(endTimestamp),
-        max_results: '50',
-      });
+    const endDateMs = rawEnd
+      ? Date.parse(`${rawEnd}T23:59:59.999Z`)
+      : Date.now();
+    const startDateMs = rawStart
+      ? Date.parse(`${rawStart}T00:00:00.000Z`)
+      : endDateMs - 365 * 24 * 60 * 60 * 1000;
 
-      if (pageToken) {
-        params.set('page_token', pageToken);
+    if (!Number.isFinite(endDateMs) || !Number.isFinite(startDateMs) || startDateMs > endDateMs) {
+      return NextResponse.json({ error: 'Invalid date format' }, { status: 400 });
+    }
+
+    // 4. Optional page token
+    const pageToken =
+      typeof body.pageToken === 'string' && body.pageToken.length > 0
+        ? body.pageToken
+        : null;
+
+    // 5. Build URL
+    const url = buildSalesHistoryUrl({ startDateMs, endDateMs, pageToken, maxResults: 50 });
+
+    // 6. Call Hotmart API — token in Authorization header only, never in query string
+    const response = await fetch(url, {
+      method: 'GET',
+      cache: 'no-store',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: 'application/json',
+      },
+    });
+
+    // 7. Handle non-ok response — never leak error body to client
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Hotmart API Error:', response.status, errorText);
+      if (response.status === 401 || response.status === 403) {
+        return NextResponse.json({ error: 'Hotmart authentication failed' }, { status: 401 });
       }
+      return NextResponse.json({ error: 'Failed to fetch from Hotmart' }, { status: 502 });
+    }
 
-      const hotmartUrl = `https://developers.hotmart.com/payments/api/v1/sales/history?${params.toString()}`;
+    // 8. Parse JSON
+    const payload: unknown = await response.json();
+    const payloadRecord: Record<string, unknown> =
+      payload !== null && typeof payload === 'object' && !Array.isArray(payload)
+        ? (payload as Record<string, unknown>)
+        : {};
 
-      const hotmartResponse = await fetch(hotmartUrl, {
-        headers: {
-          Authorization: `Bearer ${HOTMART_ACCESS_TOKEN}`,
-          'Content-Type': 'application/json',
-        },
-      });
+    const itemsRaw: unknown[] = Array.isArray(payloadRecord.items)
+      ? payloadRecord.items
+      : Array.isArray(payloadRecord.data)
+      ? payloadRecord.data
+      : [];
 
-      if (!hotmartResponse.ok) {
-        const errorText = await hotmartResponse.text();
-        console.error('Hotmart API Error:', errorText);
-        return NextResponse.json({ error: 'Failed to fetch from Hotmart API', details: errorText }, { status: 502 });
+    // 9. Map items — drop nulls and count skipped, then dedup
+    let skipped = 0;
+    const survivors: MappedHotmartSale[] = [];
+    for (const item of itemsRaw) {
+      const mapped = mapHotmartItem(item);
+      if (mapped === null) {
+        skipped++;
+      } else {
+        survivors.push(mapped);
       }
+    }
+    const mapped = dedupeMappedSales(survivors);
 
-      const hotmartData: HotmartHistoryResponse = await hotmartResponse.json();
-      const items = hotmartData.items || [];
-
-      totalFetched += items.length;
-
-      for (const item of items) {
-        const transactionId = item.transaction;
-        if (!transactionId) continue;
-
-        const status = item.purchase?.status || 'UNKNOWN';
-        const price = item.purchase?.price?.value || 0;
-        const approvedDate = item.purchase?.approved_date
-          ? new Date(item.purchase.approved_date).toISOString()
-          : new Date().toISOString();
-
-        // Upsert sale — set created_at from approved_date so historical sales appear
-        // in the correct date-range queries (metrics filter on created_at, not updated_at)
-        const { error: saleError } = await supabaseServerClient
-          .from('sales')
-          .upsert(
-            {
-              transaction_id: transactionId,
-              status,
-              price: Number(price),
-              created_at: approvedDate,
-              updated_at: approvedDate,
-            },
-            { onConflict: 'transaction_id' }
-          );
-
-        if (saleError) {
-          console.error(`Error upserting sale ${transactionId}:`, saleError);
-          continue;
-        }
-
-        totalUpserted++;
-
-        // Upsert UTMs from tracking info
-        const tracking = item.tracking;
-        if (tracking && (tracking.source || tracking.source_sck || tracking.external_code)) {
-          const { error: utmError } = await supabaseServerClient
-            .from('sale_utms')
-            .upsert(
-              {
-                transaction_id: transactionId,
-                utm_source: tracking.source || null,
-                utm_campaign: tracking.source_sck || null,
-                utm_medium: null,
-                utm_content: tracking.external_code || null,
-                utm_term: null,
-              },
-              { onConflict: 'transaction_id' }
-            );
-
-          if (utmError) {
-            console.error(`Error upserting UTMs for ${transactionId}:`, utmError);
-          }
-        }
+    // 10. Persist — sales first (FK constraint: sale_utms.transaction_id references sales)
+    const updatedAt = new Date().toISOString();
+    const saleRows: SaleRow[] = mapped.map((m) => {
+      const row: SaleRow = {
+        transaction_id: m.sale.transaction_id,
+        status: m.sale.status,
+        price: m.sale.price,
+        updated_at: updatedAt,
+      };
+      // Only write created_at when the historical date is available
+      if (m.sale.created_at !== null) {
+        row.created_at = m.sale.created_at;
       }
+      return row;
+    });
 
-      pageToken = hotmartData.page_info?.next_page_token;
-    } while (pageToken);
+    if (saleRows.length > 0) {
+      const { error: saleError } = await supabaseServerClient
+        .from('sales')
+        .upsert(saleRows, { onConflict: 'transaction_id' });
+      if (saleError) {
+        console.error('Error upserting sales:', saleError);
+        return NextResponse.json({ error: 'Database error' }, { status: 500 });
+      }
+    }
+
+    const utmRows: UtmRow[] = mapped
+      .filter((m) => m.utms !== null)
+      .map((m) => m.utms as UtmRow);
+
+    if (utmRows.length > 0) {
+      const { error: utmError } = await supabaseServerClient
+        .from('sale_utms')
+        .upsert(utmRows, { onConflict: 'transaction_id' });
+      if (utmError) {
+        // Log but do not fail — sales are already persisted (mirrors webhook behaviour)
+        console.error('Error upserting sale_utms:', utmError);
+      }
+    }
+
+    // 11. Return pagination info
+    const { nextPageToken, totalResults } = extractPageInfo(payload);
 
     return NextResponse.json(
-      { success: true, upserted: totalUpserted, fetched: totalFetched },
-      { status: 200 }
+      {
+        success: true,
+        count: saleRows.length,
+        total: itemsRaw.length,
+        skipped,
+        nextPageToken,
+        totalResults,
+      },
+      { status: 200 },
     );
   } catch (error) {
     console.error('Hotmart sync error:', error);
