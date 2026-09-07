@@ -9,7 +9,7 @@
 | 3 | Core Metrics Engine | Processar eventos de vendas e gastos para calcular as métricas exatas. | CALC-01, CALC-02, CALC-03, CALC-04 | 2 |
 | 4 | Dashboard UI | Exibir as informações consolidadas visualmente para o usuário com atualizações periódicas. | UI-01, UI-02, UI-03 | 2 |
 | 5 | Date Range Picker Avançado | Substituir o seletor de datas simples por um calendário interativo estilo Facebook, com opções predefinidas e seleção customizada. | UI-04 | 2 |
-| 6 | Importação de Histórico Hotmart | Criar um endpoint e UI para importar o histórico de vendas passadas via API REST da Hotmart, não só os eventos futuros do webhook. | HOT-04 | 2 |
+| 6 | Importação de Histórico Hotmart | 3/3 | Complete   | 2026-09-07 |
 | 7 | Filtro por Produto | Adicionar filtro de produto ao dashboard para visualizar métricas isoladas por produto vendido. | UI-05 | 2 |
 
 ## Phase Details
@@ -64,12 +64,12 @@
 2. O endpoint autentica via Bearer token na API REST da Hotmart e pagina os resultados.
 3. As vendas são salvas no banco com UPSERT (não duplica se rodar duas vezes).
 4. Uma barra de progresso ou feedback visual é exibido durante a importação.
-**Plans:** 3 plans
+**Plans:** 3/3 plans complete
 
 Plans:
-- [ ] 06-01-PLAN.md — Camada de mapeamento puro da API de histórico da Hotmart + harness de verificação offline
-- [ ] 06-02-PLAN.md — Endpoint POST /api/sync/hotmart (Bearer, paginação, upsert idempotente) + documentação de env
-- [ ] 06-03-PLAN.md — Botão "Importar Histórico" com barra de progresso no DashboardHeader
+- [x] 06-01-PLAN.md — Camada de mapeamento puro da API de histórico da Hotmart + harness de verificação offline
+- [x] 06-02-PLAN.md — Endpoint POST /api/sync/hotmart (Bearer, paginação, upsert idempotente) + documentação de env
+- [x] 06-03-PLAN.md — Botão "Importar Histórico" com barra de progresso no DashboardHeader
 
 ### Phase 7: Filtro por Produto
 **Goal**: Adicionar filtro de produto ao dashboard para visualizar métricas isoladas por produto vendido.
