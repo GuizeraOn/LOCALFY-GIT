@@ -10,6 +10,7 @@
 - [x] **HOT-01**: Criar endpoint de webhook seguro para receber notificações da Hotmart.
 - [x] **HOT-02**: Processar eventos de `PURCHASE_APPROVED`, `PURCHASE_REFUNDED`, `PURCHASE_CANCELED`.
 - [x] **HOT-03**: Extrair e armazenar parâmetros UTM dos metadados/src da venda na Hotmart.
+- [ ] **HOT-04**: Criar endpoint REST para importar vendas passadas do Hotmart (Histórico).
 
 ### Integração Facebook Ads
 
@@ -35,6 +36,8 @@
 - [x] **UI-01**: Criar tela principal (Dashboard) para exibir Faturamento, Lucro, ROAS e CPA geral.
 - [x] **UI-02**: Exibir tabela de desempenho com detalhamento por Campanha.
 - [x] **UI-03**: Interface com botão "Atualizar Agora" que dispara a busca no Facebook e recarrega os dados.
+- [x] **UI-04**: Adicionar Date Range Picker avançado (tipo Facebook).
+- [ ] **UI-05**: Adicionar filtro de produto ao dashboard.
 
 ## v2 Requirements
 
@@ -70,10 +73,13 @@
 | UI-01 | Phase 4 | Complete |
 | UI-02 | Phase 4 | Complete |
 | UI-03 | Phase 4 | Complete |
+| UI-04 | Phase 5 | Complete |
+| HOT-04 | Phase 6 | Pending |
+| UI-05 | Phase 7 | Pending |
 
 **Coverage:**
-- v1 requirements: 16 total
-- Mapped to phases: 16
+- v1 requirements: 18 total
+- Mapped to phases: 18
 - Unmapped: 0 ✓
 
 ---

@@ -34,3 +34,63 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+## Importação de histórico da Hotmart
+
+O endpoint `POST /api/sync/hotmart` importa o histórico de vendas da Hotmart para o banco de dados,
+permitindo que o dashboard exiba receita e ROAS de vendas que aconteceram antes da instalação do
+webhook.
+
+### Configuração
+
+1. Acesse **Hotmart → Ferramentas → Credenciais de API** e copie o **Access Token** (Personal Access Token).
+2. Cole o valor em `.env.local` (nunca commite este arquivo):
+   ```
+   HOTMART_ACCESS_TOKEN=seu-token-aqui
+   ```
+
+### Uso
+
+**Requisição** (`POST /api/sync/hotmart`, `Content-Type: application/json`):
+
+| Campo       | Tipo   | Padrão                 | Descrição                                        |
+|-------------|--------|------------------------|--------------------------------------------------|
+| `startDate` | string | hoje menos 365 dias    | Data de início no formato `yyyy-MM-dd`           |
+| `endDate`   | string | hoje                   | Data de fim no formato `yyyy-MM-dd`              |
+| `pageToken` | string | ausente (primeira pág) | Cursor opaco retornado pela chamada anterior     |
+
+**Resposta** (HTTP 200):
+
+| Campo          | Tipo            | Descrição                                              |
+|----------------|-----------------|--------------------------------------------------------|
+| `success`      | boolean         | `true`                                                 |
+| `count`        | number          | Linhas inseridas/atualizadas na tabela `sales`         |
+| `total`        | number          | Itens retornados pela Hotmart nesta página             |
+| `skipped`      | number          | Itens descartados por não terem `transaction_id`       |
+| `nextPageToken`| string \| null  | Cursor para a próxima página; `null` indica fim        |
+| `totalResults` | number \| null  | Total de resultados em todas as páginas (quando disponível) |
+
+### Paginação
+
+Cada chamada processa exatamente **uma página** de até 50 itens. Para importar todo o histórico,
+repita a chamada com o `nextPageToken` retornado até receber `null`:
+
+```bash
+# Primeira página
+curl -s -X POST http://localhost:3000/api/sync/hotmart \
+  -H 'Content-Type: application/json' \
+  -d '{"startDate":"2024-01-01","endDate":"2024-12-31"}' | tee /tmp/page1.json
+
+# Próxima página (use o nextPageToken da resposta anterior)
+TOKEN=$(jq -r .nextPageToken /tmp/page1.json)
+curl -s -X POST http://localhost:3000/api/sync/hotmart \
+  -H 'Content-Type: application/json' \
+  -d "{\"startDate\":\"2024-01-01\",\"endDate\":\"2024-12-31\",\"pageToken\":\"$TOKEN\"}"
+```
+
+### Idempotência
+
+A importação é **idempotente**: cada venda é inserida com `UPSERT` na coluna `transaction_id`.
+Executar a mesma importação duas vezes atualiza os registros existentes em vez de duplicá-los.
+As datas históricas das vendas são preservadas em `created_at`, garantindo que o dashboard
+apresente os dados no período correto.
