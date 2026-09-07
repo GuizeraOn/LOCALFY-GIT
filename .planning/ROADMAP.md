@@ -80,3 +80,11 @@ Plans:
 2. Ao selecionar um produto, todos os cards (Faturamento, Lucro, ROAS, etc.) filtram somente pelas vendas daquele produto.
 3. A tabela de campanhas também reflete o filtro de produto.
 4. A opção "Todos os produtos" está disponível para voltar à visão global.
+**Plans:** 5 plans
+
+Plans:
+- [ ] 07-01-PLAN.md — Migração 0003 (colunas product_id/product_name) + extração de produto no mapeador da Hotmart
+- [ ] 07-02-PLAN.md — Filtro por produto em calculateMetrics + harness offline de assertions
+- [ ] 07-03-PLAN.md — Persistência do produto no import de histórico e no webhook (com backfill via UPSERT)
+- [ ] 07-04-PLAN.md — GET /api/products + parâmetro productId validado em GET /api/metrics
+- [ ] 07-05-PLAN.md — Componente ProductFilter no header e ligação ponta a ponta no dashboard
