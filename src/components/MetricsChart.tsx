@@ -35,7 +35,7 @@ export function MetricsChart({ global }: MetricsChartProps) {
               cursor={{fill: '#27272a'}}
               contentStyle={{ backgroundColor: '#18181b', border: '1px solid #27272a', borderRadius: '8px', color: '#f4f4f5' }}
               itemStyle={{ color: '#f4f4f5' }}
-              formatter={(value: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value)}
+              formatter={(value) => typeof value === 'number' ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value) : String(value)}
             />
             <Legend />
             <Bar dataKey="Faturamento Líquido" fill="#3b82f6" radius={[4, 4, 0, 0]} />
