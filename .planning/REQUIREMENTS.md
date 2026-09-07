@@ -13,9 +13,9 @@
 
 ### Integração Facebook Ads
 
-- [ ] **FB-01**: Autenticar usando System User Token ou token de longa duração com a Graph API.
-- [ ] **FB-02**: Buscar gastos de campanhas (insights, spend, clicks, impressions) por `ad_account_id`.
-- [ ] **FB-03**: Executar sincronização de gastos via cron job (ex: a cada 15 minutos).
+- [x] **FB-01**: Autenticar usando System User Token ou token de longa duração com a Graph API.
+- [x] **FB-02**: Buscar gastos de campanhas (insights, spend, clicks, impressions) por `ad_account_id`.
+- [x] **FB-03**: Executar sincronização de gastos via cron job (ex: a cada 15 minutos).
 
 ### Cálculos Financeiros
 
@@ -60,9 +60,9 @@
 | DB-01 | Phase 1 | Complete |
 | DB-02 | Phase 1 | Complete |
 | DB-03 | Phase 1 | Complete |
-| FB-01 | Phase 2 | Pending |
-| FB-02 | Phase 2 | Pending |
-| FB-03 | Phase 2 | Pending |
+| FB-01 | Phase 2 | Complete |
+| FB-02 | Phase 2 | Complete |
+| FB-03 | Phase 2 | Complete |
 | CALC-01 | Phase 3 | Pending |
 | CALC-02 | Phase 3 | Pending |
 | CALC-03 | Phase 3 | Pending |
