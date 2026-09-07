@@ -97,7 +97,8 @@ export async function POST(request: Request) {
           ? new Date(item.purchase.approved_date).toISOString()
           : new Date().toISOString();
 
-        // Upsert sale
+        // Upsert sale — set created_at from approved_date so historical sales appear
+        // in the correct date-range queries (metrics filter on created_at, not updated_at)
         const { error: saleError } = await supabaseServerClient
           .from('sales')
           .upsert(
@@ -105,6 +106,7 @@ export async function POST(request: Request) {
               transaction_id: transactionId,
               status,
               price: Number(price),
+              created_at: approvedDate,
               updated_at: approvedDate,
             },
             { onConflict: 'transaction_id' }
