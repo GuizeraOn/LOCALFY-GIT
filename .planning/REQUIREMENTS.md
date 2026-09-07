@@ -19,10 +19,10 @@
 
 ### Cálculos Financeiros
 
-- [ ] **CALC-01**: Calcular Faturamento Bruto (soma de vendas aprovadas).
-- [ ] **CALC-02**: Calcular Faturamento Líquido (Bruto - taxas da plataforma/afiliados).
-- [ ] **CALC-03**: Calcular Lucro (Líquido - Gasto em Ads - Despesas extras).
-- [ ] **CALC-04**: Calcular ROAS, ROI, CPA e Margem.
+- [x] **CALC-01**: Calcular Faturamento Bruto (soma de vendas aprovadas).
+- [x] **CALC-02**: Calcular Faturamento Líquido (Bruto - taxas da plataforma/afiliados).
+- [x] **CALC-03**: Calcular Lucro (Líquido - Gasto em Ads - Despesas extras).
+- [x] **CALC-04**: Calcular ROAS, ROI, CPA e Margem.
 
 ### Banco de Dados
 
@@ -63,10 +63,10 @@
 | FB-01 | Phase 2 | Complete |
 | FB-02 | Phase 2 | Complete |
 | FB-03 | Phase 2 | Complete |
-| CALC-01 | Phase 3 | Pending |
-| CALC-02 | Phase 3 | Pending |
-| CALC-03 | Phase 3 | Pending |
-| CALC-04 | Phase 3 | Pending |
+| CALC-01 | Phase 3 | Complete |
+| CALC-02 | Phase 3 | Complete |
+| CALC-03 | Phase 3 | Complete |
+| CALC-04 | Phase 3 | Complete |
 | UI-01 | Phase 4 | Pending |
 | UI-02 | Phase 4 | Pending |
 | UI-03 | Phase 4 | Pending |
