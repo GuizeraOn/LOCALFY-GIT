@@ -64,6 +64,12 @@
 2. O endpoint autentica via Bearer token na API REST da Hotmart e pagina os resultados.
 3. As vendas são salvas no banco com UPSERT (não duplica se rodar duas vezes).
 4. Uma barra de progresso ou feedback visual é exibido durante a importação.
+**Plans:** 3 plans
+
+Plans:
+- [ ] 06-01-PLAN.md — Camada de mapeamento puro da API de histórico da Hotmart + harness de verificação offline
+- [ ] 06-02-PLAN.md — Endpoint POST /api/sync/hotmart (Bearer, paginação, upsert idempotente) + documentação de env
+- [ ] 06-03-PLAN.md — Botão "Importar Histórico" com barra de progresso no DashboardHeader
 
 ### Phase 7: Filtro por Produto
 **Goal**: Adicionar filtro de produto ao dashboard para visualizar métricas isoladas por produto vendido.
