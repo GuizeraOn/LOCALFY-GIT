@@ -253,4 +253,54 @@ const { mapHotmartItem, dedupeMappedSales, buildSalesHistoryUrl, extractPageInfo
   assert.deepEqual(r2, { nextPageToken: null, totalResults: null }, 'Test 12: empty payload');
 }
 
+// ---------------------------------------------------------------------------
+// 13. Product extraction — top-level product object
+// ---------------------------------------------------------------------------
+{
+  const result = mapHotmartItem({
+    product: { id: 123, name: 'Curso X' },
+    purchase: { transaction: 'HP-P1', status: 'approved', price: { value: 10 } },
+  });
+  assert.ok(result !== null, 'Test 13: result not null');
+  assert.equal(result.sale.product_id, '123', 'Test 13: product_id from top-level product.id (number -> string)');
+  assert.equal(result.sale.product_name, 'Curso X', 'Test 13: product_name from top-level product.name');
+}
+
+// ---------------------------------------------------------------------------
+// 14. Product extraction — product nested inside purchase
+// ---------------------------------------------------------------------------
+{
+  const result = mapHotmartItem({
+    purchase: { transaction: 'HP-P2', product: { id: 'ABC', name: 'Curso Y' }, status: 'approved', price: { value: 10 } },
+  });
+  assert.ok(result !== null, 'Test 14: result not null');
+  assert.equal(result.sale.product_id, 'ABC', 'Test 14: product_id from purchase.product.id');
+  assert.equal(result.sale.product_name, 'Curso Y', 'Test 14: product_name from purchase.product.name');
+}
+
+// ---------------------------------------------------------------------------
+// 15. Product extraction — fallback by ucode + trim
+// ---------------------------------------------------------------------------
+{
+  const result = mapHotmartItem({
+    product: { ucode: 'u-9', name: '  Curso Z  ' },
+    purchase: { transaction: 'HP-P3' },
+  });
+  assert.ok(result !== null, 'Test 15: result not null');
+  assert.equal(result.sale.product_id, 'u-9', 'Test 15: product_id from product.ucode');
+  assert.equal(result.sale.product_name, 'Curso Z', 'Test 15: product_name trimmed');
+}
+
+// ---------------------------------------------------------------------------
+// 16. Product extraction — no product -> both null, sale not null
+// ---------------------------------------------------------------------------
+{
+  const result = mapHotmartItem({
+    purchase: { transaction: 'HP-P4', status: 'approved', price: { value: 10 } },
+  });
+  assert.ok(result !== null, 'Test 16: result not null even without product');
+  assert.equal(result.sale.product_id, null, 'Test 16: product_id null when absent');
+  assert.equal(result.sale.product_name, null, 'Test 16: product_name null when absent');
+}
+
 console.log('ALL HOTMART MAPPING CHECKS PASSED');
