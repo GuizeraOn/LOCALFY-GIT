@@ -12,6 +12,7 @@
 | 6 | Importação de Histórico Hotmart | Criar um endpoint e UI para importar o histórico de vendas passadas via API REST da Hotmart, não só os eventos futuros do webhook. | HOT-04 | 2 |
 | 7 | Filtro por Produto | Adicionar filtro de produto ao dashboard para visualizar métricas isoladas por produto vendido. | UI-05 | 2 |
 | 8 | Conversão de Moedas | Adicionar coluna currency e converter moedas locais para a moeda base (BRL) usando taxas de câmbio dinâmicas no dashboard. | CALC-05 | 2 |
+| 9 | Comissão Exata | Extrair a comissão real ou descontar as taxas da Hotmart para refletir o Faturamento Líquido idêntico à plataforma. | CALC-06 | 2 |
 
 ## Phase Details
 
@@ -99,3 +100,12 @@ Plans:
 2. O webhook e a sincronização do histórico salvam a moeda da venda.
 3. O dashboard ou backend busca taxas de câmbio atualizadas (ex: via API de Exchange Rates gratuita) e converte todas as vendas para a moeda base na hora de calcular o Faturamento e Lucro.
 4. Os valores apresentados deixam de ter distorções por soma de moedas diferentes.
+
+### Phase 9: Comissão Exata (Faturamento Líquido)
+**Goal**: Adicionar coluna de comissão e extrair a taxa da Hotmart (ou valor líquido real) para alinhar o dashboard 100% com o painel da plataforma.
+**Requirements**: CALC-06
+**Depends on**: Phase 8
+**Success criteria**:
+1. Migração adicionando a coluna `commission` na tabela `sales`.
+2. Webhook e sincronização histórica extraem a comissão real ou calculam a taxa descontando o `hotmart_fee`.
+3. Dashboard exibe o Faturamento Líquido baseado na comissão real (convertida para a moeda base), batendo perfeitamente com a Hotmart.
