@@ -6,6 +6,8 @@ export interface HotmartSaleRow {
   status: string;
   price: number;
   created_at: string | null; // ISO 8601 UTC, null when Hotmart gave no usable date
+  product_id: string | null;   // null when Hotmart response has no product info
+  product_name: string | null; // null when Hotmart response has no product info
 }
 
 export interface HotmartUtmRow {
@@ -134,6 +136,23 @@ export function parseUtmString(raw: unknown): Omit<HotmartUtmRow, 'transaction_i
   };
 }
 
+function extractProduct(
+  record: Record<string, unknown>,
+  purchase: Record<string, unknown>,
+): { product_id: string | null; product_name: string | null } {
+  const product = asRecord(record.product ?? purchase.product);
+  const product_id =
+    toCleanString(product.id) ??
+    toCleanString(product.ucode) ??
+    toCleanString(record.product_id) ??
+    null;
+  const product_name =
+    toCleanString(product.name) ??
+    toCleanString(record.product_name) ??
+    null;
+  return { product_id, product_name };
+}
+
 function extractUtms(
   purchase: Record<string, unknown>,
   transactionId: string,
@@ -250,6 +269,7 @@ export function mapHotmartItem(item: unknown): MappedHotmartSale | null {
   }
 
   const utms = extractUtms(purchase, transactionId);
+  const { product_id, product_name } = extractProduct(record, purchase);
 
   return {
     sale: {
@@ -257,6 +277,8 @@ export function mapHotmartItem(item: unknown): MappedHotmartSale | null {
       status,
       price,
       created_at: createdAt ?? null,
+      product_id,
+      product_name,
     },
     utms,
   };
