@@ -93,6 +93,7 @@ export async function POST(request: Request) {
 
     // 5. Build URL
     const url = buildSalesHistoryUrl({ startDateMs, endDateMs, pageToken, maxResults: 50 });
+    console.log(`[hotmart-sync] Fetching URL: ${url}`);
 
     // 6. Call Hotmart API — token in Authorization header only, never in query string
     const response = await fetch(url, {
