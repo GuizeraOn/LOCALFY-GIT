@@ -1,6 +1,7 @@
 export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
+import https from 'https';
 import { supabaseServerClient } from '@/lib/supabase-server';
 import {
   buildSalesHistoryUrl,
@@ -102,28 +103,40 @@ export async function POST(request: Request) {
     const url = buildSalesHistoryUrl({ startDateMs, endDateMs, pageToken, maxResults: 50 });
     console.log(`[hotmart-sync] Fetching URL: ${url}`);
 
-    // 6. Call Hotmart API — token in Authorization header only, never in query string
-    const response = await fetch(url, {
-      method: 'GET',
-      cache: 'no-store',
-      headers: {
-        Authorization: `Bearer ${token}`,
-        Accept: 'application/json',
-      },
+    // 6. Call Hotmart API using native https (Next.js patches fetch and adds
+    //    headers that Hotmart rejects with 400 invalid_parameter)
+    const parsedUrl = new URL(url);
+    const hotmartResponse = await new Promise<{ ok: boolean; status: number; body: string }>((resolve, reject) => {
+      const req = https.request({
+        hostname: parsedUrl.hostname,
+        path: parsedUrl.pathname + parsedUrl.search,
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: 'application/json',
+        },
+      }, (res) => {
+        let data = '';
+        res.on('data', (chunk) => { data += chunk; });
+        res.on('end', () => {
+          resolve({ ok: res.statusCode! >= 200 && res.statusCode! < 300, status: res.statusCode!, body: data });
+        });
+      });
+      req.on('error', reject);
+      req.end();
     });
 
     // 7. Handle non-ok response
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Hotmart API Error:', response.status, errorText);
-      if (response.status === 401 || response.status === 403) {
-        return NextResponse.json({ error: 'Hotmart authentication failed', detail: errorText }, { status: 401 });
+    if (!hotmartResponse.ok) {
+      console.error('Hotmart API Error:', hotmartResponse.status, hotmartResponse.body);
+      if (hotmartResponse.status === 401 || hotmartResponse.status === 403) {
+        return NextResponse.json({ error: 'Hotmart authentication failed', detail: hotmartResponse.body }, { status: 401 });
       }
-      return NextResponse.json({ error: 'Failed to fetch from Hotmart', hotmart_status: response.status, detail: errorText }, { status: 502 });
+      return NextResponse.json({ error: 'Failed to fetch from Hotmart', hotmart_status: hotmartResponse.status, detail: hotmartResponse.body }, { status: 502 });
     }
 
     // 8. Parse JSON
-    const payload: unknown = await response.json();
+    const payload: unknown = JSON.parse(hotmartResponse.body);
     const payloadRecord: Record<string, unknown> =
       payload !== null && typeof payload === 'object' && !Array.isArray(payload)
         ? (payload as Record<string, unknown>)
