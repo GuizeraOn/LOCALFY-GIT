@@ -13,6 +13,7 @@
 | 7 | Filtro por Produto | Adicionar filtro de produto ao dashboard para visualizar métricas isoladas por produto vendido. | UI-05 | 2 |
 | 8 | Conversão de Moedas | Adicionar coluna currency e converter moedas locais para a moeda base (BRL) usando taxas de câmbio dinâmicas no dashboard. | CALC-05 | 2 |
 | 9 | Comissão Exata | Extrair a comissão real ou descontar as taxas da Hotmart para refletir o Faturamento Líquido idêntico à plataforma. | CALC-06 | 2 |
+| 10 | Advanced Analytics & Funnel | Adicionar funil de vendas, métricas de estorno/saúde e múltiplos gráficos analíticos de quebra. | MET-01, MET-02, MET-03, CHART-01, CHART-02 | 2 |
 
 ## Phase Details
 
@@ -109,3 +110,13 @@ Plans:
 1. Migração adicionando a coluna `commission` na tabela `sales`.
 2. Webhook e sincronização histórica extraem a comissão real ou calculam a taxa descontando o `hotmart_fee`.
 3. Dashboard exibe o Faturamento Líquido baseado na comissão real (convertida para a moeda base), batendo perfeitamente com a Hotmart.
+
+### Phase 10: Advanced Analytics & Funnel (Métricas Avançadas)
+**Goal**: Expandir o dashboard com funil de conversão, saúde do negócio (reembolsos, pendentes), e gráficos avançados (horário, UTMs, país, etc).
+**Requirements**: MET-01, MET-02, MET-03, CHART-01, CHART-02
+**Depends on**: Phase 7, Phase 9
+**Success criteria**:
+1. Banco de dados salva tipo de pagamento, país, estornos e chargebacks.
+2. Cálculo de métricas de saúde (taxa de aprovação, vendas pendentes, refunds).
+3. Novos cards de Funil de Conversão integrando dados de cliques/visitas com vendas iniciadas e aprovadas.
+4. Novos gráficos gerados (Pizza para tipos de pagamento, Barras para dias/horários, Linhas para acumulado).

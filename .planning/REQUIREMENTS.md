@@ -27,6 +27,17 @@
 - [x] **CALC-05**: Converter vendas em múltiplas moedas para a moeda base do projeto (BRL) usando taxas de câmbio.
 - [x] **CALC-06**: Extrair e salvar a comissão real ou descontar `hotmart_fee` do preço bruto para calcular Faturamento Líquido preciso.
 
+### Advanced Analytics (Métricas e Saúde)
+
+- [ ] **MET-01**: Adicionar cards de Funil de Conversão (Cliques, Vendas Iniciadas, Vendas Aprovadas, CPA).
+- [ ] **MET-02**: Adicionar cards de Saúde do Negócio (Vendas Pendentes, Taxa de Aprovação por Método, Refunds, Chargebacks, Unidades).
+- [ ] **MET-03**: Salvar e mapear tipo de pagamento (Pix, Cartão, Boleto) e país da venda no banco.
+
+### Gráficos Analíticos
+
+- [ ] **CHART-01**: Visualizações de Tempo (Faturamento por Dia/Hora, Lucro por Hora, Comparativo Acumulado).
+- [ ] **CHART-02**: Visualizações de Quebra (Por Produto, País, Tipo de Pagamento, UTMs).
+
 ### Banco de Dados
 
 - [x] **DB-01**: Definir schema para armazenar eventos de vendas.
@@ -79,11 +90,16 @@
 | HOT-04 | Phase 6 | Pending |
 | UI-05 | Phase 7 | Pending |
 | CALC-05 | Phase 8 | Complete |
-| CALC-06 | Phase 9 | Pending |
+| CALC-06 | Phase 9 | Complete |
+| MET-01 | Phase 10 | Pending |
+| MET-02 | Phase 10 | Pending |
+| MET-03 | Phase 10 | Pending |
+| CHART-01 | Phase 10 | Pending |
+| CHART-02 | Phase 10 | Pending |
 
 **Coverage:**
-- v1 requirements: 20 total
-- Mapped to phases: 20
+- v1 requirements: 25 total
+- Mapped to phases: 25
 - Unmapped: 0 ✓
 
 ---
