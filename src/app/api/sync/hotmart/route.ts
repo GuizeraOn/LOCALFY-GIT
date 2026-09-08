@@ -56,11 +56,12 @@ export async function POST(request: Request) {
     }
 
     // 2. Check token — never echo it
-    const token = process.env.HOTMART_ACCESS_TOKEN;
+    const token = process.env.HOTMART_ACCESS_TOKEN?.trim();
     if (!token) {
       console.warn('Missing HOTMART_ACCESS_TOKEN environment variable.');
       return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
     }
+    console.log(`[hotmart-sync] Token length: ${token.length}, Starts with: ${token.substring(0, 5)}... Ends with: ...${token.substring(token.length - 5)}`);
 
     // 3. Validate dates
     const rawStart = typeof body.startDate === 'string' ? body.startDate : undefined;
