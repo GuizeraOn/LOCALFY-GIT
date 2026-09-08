@@ -7,6 +7,8 @@ import { DashboardHeader } from '@/components/DashboardHeader';
 import { MetricCards } from '@/components/MetricCards';
 import { MetricsChart } from '@/components/MetricsChart';
 import { CampaignTable } from '@/components/CampaignTable';
+import { FunnelHealthCards } from '@/components/FunnelHealthCards';
+import { AdvancedCharts } from '@/components/AdvancedCharts';
 
 const fetcher = (url: string) => fetch(url).then(res => res.json());
 
@@ -46,12 +48,24 @@ export default function Dashboard() {
         onSync={() => mutate()} 
       />
       
+      {/* Métricas principais */}
       <MetricCards global={data?.global} />
+
+      {/* Funil de Tráfego + Saúde do Negócio */}
+      <FunnelHealthCards global={data?.global} />
       
+      {/* Gráfico de evolução temporal */}
       <MetricsChart global={data?.global} />
       
-      <CampaignTable campaigns={data?.campaigns} />
-      
+      {/* Gráficos analíticos avançados */}
+      <div className="mt-8">
+        <AdvancedCharts charts={data?.charts} />
+      </div>
+
+      {/* Tabela de campanhas */}
+      <div className="mt-8">
+        <CampaignTable campaigns={data?.campaigns} />
+      </div>
     </main>
   );
 }

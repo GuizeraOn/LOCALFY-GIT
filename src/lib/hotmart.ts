@@ -7,6 +7,9 @@ export interface HotmartSaleRow {
   price: number;
   currency: string;
   net_revenue: number | null;
+  payment_type: string | null;
+  country: string | null;
+  hsrc: string | null;
   created_at: string | null; // ISO 8601 UTC, null when Hotmart gave no usable date
   product_id: string | null;   // null when Hotmart response has no product info
   product_name: string | null; // null when Hotmart response has no product info
@@ -266,6 +269,25 @@ export function mapHotmartItem(item: unknown): MappedHotmartSale | null {
     }
   }
 
+  const payment_type =
+    toCleanString(asRecord(purchase.payment).type) ??
+    toCleanString(purchase.payment_type) ??
+    toCleanString(record.payment_type) ??
+    null;
+
+  const country =
+    toCleanString(asRecord(asRecord(purchase.buyer).country).iso) ??
+    toCleanString(purchase.buyer_country) ??
+    toCleanString(record.country) ??
+    null;
+
+  const hsrc =
+    toCleanString(purchase.sck) ??
+    toCleanString(purchase.src) ??
+    toCleanString(record.sck) ??
+    toCleanString(record.src) ??
+    null;
+
   const createdAt =
     toIsoDate(purchase.order_date) ??
     toIsoDate(purchase.approved_date) ??
@@ -301,6 +323,9 @@ export function mapHotmartItem(item: unknown): MappedHotmartSale | null {
       price,
       currency,
       net_revenue: netRevenue,
+      payment_type,
+      country,
+      hsrc,
       created_at: createdAt ?? null,
       product_id,
       product_name,

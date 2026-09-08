@@ -19,6 +19,9 @@ interface SaleRow {
   price: number;
   currency: string;
   net_revenue: number | null;
+  payment_type: string | null;
+  country: string | null;
+  hsrc: string | null;
   updated_at: string;
   created_at: string | null;
 }
@@ -147,6 +150,9 @@ export async function POST(request: Request) {
       price: m.sale.price,
       currency: m.sale.currency,
       net_revenue: m.sale.net_revenue,
+      payment_type: m.sale.payment_type,
+      country: m.sale.country,
+      hsrc: m.sale.hsrc,
       updated_at: updatedAt,
       // Explicit null prevents Postgres DEFAULT NOW() on INSERT; UPDATE preserves correct
       // existing dates when we re-import and the API still provides no date for that row.

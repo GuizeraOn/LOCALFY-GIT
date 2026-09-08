@@ -19,8 +19,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
     }
 
-    // Call Facebook Graph API
-    const fbUrl = `https://graph.facebook.com/v19.0/act_${FB_AD_ACCOUNT_ID}/insights?time_range={'since':'${startDate}','until':'${endDate}'}&level=campaign&fields=campaign_id,campaign_name,spend,impressions,clicks&time_increment=1&access_token=${FB_ACCESS_TOKEN}`;
+    // Call Facebook Graph API — include `actions` to get pageviews and ICs from Pixel events
+    const fbUrl = `https://graph.facebook.com/v19.0/act_${FB_AD_ACCOUNT_ID}/insights?time_range={'since':'${startDate}','until':'${endDate}'}&level=campaign&fields=campaign_id,campaign_name,spend,impressions,clicks,actions&time_increment=1&access_token=${FB_ACCESS_TOKEN}`;
     
     const fbResponse = await fetch(fbUrl);
     if (!fbResponse.ok) {
@@ -36,6 +36,23 @@ export async function POST(request: Request) {
 
     // Upsert into Supabase
     for (const item of insights) {
+      // Extract Pixel-tracked events from the actions array
+      let pageviews = 0;
+      let initiate_checkouts = 0;
+      if (Array.isArray(item.actions)) {
+        item.actions.forEach((a: any) => {
+          if (a.action_type === 'landing_page_view') {
+            pageviews += Number(a.value || 0);
+          }
+          if (
+            a.action_type === 'offsite_conversion.fb_pixel_initiate_checkout' ||
+            a.action_type === 'checkouts_initiated'
+          ) {
+            initiate_checkouts += Number(a.value || 0);
+          }
+        });
+      }
+
       const { error } = await supabaseServerClient
         .from('ad_spend')
         .upsert({
@@ -44,7 +61,9 @@ export async function POST(request: Request) {
           campaign_name: item.campaign_name,
           spend: Number(item.spend || 0),
           impressions: Number(item.impressions || 0),
-          clicks: Number(item.clicks || 0)
+          clicks: Number(item.clicks || 0),
+          pageviews,
+          initiate_checkouts,
         }, {
           onConflict: 'date, campaign_id'
         });

@@ -22,6 +22,9 @@ export async function POST(request: Request) {
     const status = payload.status || payload.data?.status || payload.event;
     const price = payload.price || payload.data?.price || payload.purchase?.price?.value || 0;
     const currency = payload.currency || payload.data?.currency || payload.purchase?.price?.currency_code || 'BRL';
+    const payment_type = payload.payment_type || payload.data?.payment?.type || payload.purchase?.payment?.type || null;
+    const country = payload.buyer_country || payload.data?.buyer?.country?.iso || payload.purchase?.buyer?.country?.iso || null;
+    const hsrc = payload.sck || payload.src || payload.data?.purchase?.sck || payload.purchase?.src || null;
     
     let netRevenue: number | null = null;
     const commissions = payload.commissions || payload.data?.commissions || payload.purchase?.commissions;
@@ -60,6 +63,9 @@ export async function POST(request: Request) {
         price: Number(price),
         currency,
         net_revenue: netRevenue,
+        payment_type,
+        country,
+        hsrc,
         updated_at: new Date().toISOString()
       }, {
         onConflict: 'transaction_id'
