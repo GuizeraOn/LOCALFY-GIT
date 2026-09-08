@@ -1,0 +1,16 @@
+{
+  "functions": {
+    "src/app/api/sync/hotmart/route.ts": {
+      "regions": ["gru1"]
+    },
+    "src/app/api/webhook/hotmart/route.ts": {
+      "regions": ["gru1"]
+    },
+    "src/app/api/sync/facebook/route.ts": {
+      "regions": ["gru1"]
+    },
+    "src/app/api/metrics/route.ts": {
+      "regions": ["gru1"]
+    }
+  }
+}
