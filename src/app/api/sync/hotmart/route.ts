@@ -74,9 +74,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Invalid date format' }, { status: 400 });
     }
 
-    const endDateMs = rawEnd
-      ? Date.parse(`${rawEnd}T23:59:59.999Z`)
-      : Date.now();
+    const endDateMs = Math.min(
+      rawEnd ? Date.parse(`${rawEnd}T23:59:59.999Z`) : Date.now(),
+      Date.now() // Hotmart rejeita datas futuras com 400
+    );
     const startDateMs = rawStart
       ? Date.parse(`${rawStart}T00:00:00.000Z`)
       : endDateMs - 365 * 24 * 60 * 60 * 1000;
