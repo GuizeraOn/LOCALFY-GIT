@@ -228,8 +228,26 @@ export function mapHotmartItem(item: unknown): MappedHotmartSale | null {
     toIsoDate(purchase.order_date) ??
     toIsoDate(purchase.approved_date) ??
     toIsoDate(purchase.date) ??
+    toIsoDate(purchase.purchase_date) ??
+    toIsoDate(purchase.date_created) ??
+    toIsoDate(purchase.recurrency_date) ??
     toIsoDate(record.order_date) ??
-    toIsoDate(record.creation_date);
+    toIsoDate(record.approved_date) ??
+    toIsoDate(record.purchase_date) ??
+    toIsoDate(record.creation_date) ??
+    toIsoDate(record.date);
+
+  if (createdAt === null) {
+    // Warn so server logs reveal which fields are present for debugging
+    const dateKeys = Object.keys({ ...record, purchase: undefined }).filter(k => k !== 'purchase');
+    const purchaseKeys = Object.keys(purchase);
+    console.warn(
+      '[hotmart] date extraction failed for transaction',
+      transactionId,
+      '| record keys:', dateKeys,
+      '| purchase keys:', purchaseKeys,
+    );
+  }
 
   const utms = extractUtms(purchase, transactionId);
 

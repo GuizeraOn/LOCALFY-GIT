@@ -18,7 +18,7 @@ interface SaleRow {
   status: string;
   price: number;
   updated_at: string;
-  created_at?: string;
+  created_at: string | null;
 }
 
 interface UtmRow {
@@ -120,6 +120,11 @@ export async function POST(request: Request) {
       : [];
 
     // 9. Map items — drop nulls and count skipped, then dedup
+    // Log the first raw item so we can inspect the actual Hotmart API shape in dev logs
+    if (itemsRaw.length > 0) {
+      console.log('[hotmart-sync] first raw item sample:', JSON.stringify(itemsRaw[0]));
+    }
+
     let skipped = 0;
     const survivors: MappedHotmartSale[] = [];
     for (const item of itemsRaw) {
@@ -134,19 +139,15 @@ export async function POST(request: Request) {
 
     // 10. Persist — sales first (FK constraint: sale_utms.transaction_id references sales)
     const updatedAt = new Date().toISOString();
-    const saleRows: SaleRow[] = mapped.map((m) => {
-      const row: SaleRow = {
-        transaction_id: m.sale.transaction_id,
-        status: m.sale.status,
-        price: m.sale.price,
-        updated_at: updatedAt,
-      };
-      // Only write created_at when the historical date is available
-      if (m.sale.created_at !== null) {
-        row.created_at = m.sale.created_at;
-      }
-      return row;
-    });
+    const saleRows: SaleRow[] = mapped.map((m) => ({
+      transaction_id: m.sale.transaction_id,
+      status: m.sale.status,
+      price: m.sale.price,
+      updated_at: updatedAt,
+      // Explicit null prevents Postgres DEFAULT NOW() on INSERT; UPDATE preserves correct
+      // existing dates when we re-import and the API still provides no date for that row.
+      created_at: m.sale.created_at,
+    }));
 
     if (saleRows.length > 0) {
       const { error: saleError } = await supabaseServerClient
