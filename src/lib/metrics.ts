@@ -8,10 +8,21 @@ export function calculateMetrics(
 ) {
   function getPriceInBRL(sale: any) {
     const price = Number(sale.price);
-    const currency = sale.currency || 'BRL';
+    const currency = (sale.currency || 'BRL').toUpperCase();
     const rate = rates[currency];
-    if (rate && rate > 0) return price / rate;
-    return price;
+    const converted = (rate && rate > 0) ? price / rate : price;
+
+    // Safety: if conversion yields a value >5x the net_revenue (which Hotmart pays in BRL),
+    // the sale was likely imported before the currency column existed (stored as 'BRL' but
+    // price is actually in a foreign currency). Fall back to net_revenue / 0.901.
+    if (sale.net_revenue !== null && sale.net_revenue !== undefined) {
+      const netBRL = Number(sale.net_revenue); // already in BRL from Hotmart
+      if (netBRL > 0 && converted > netBRL * 5) {
+        return netBRL / 0.901; // back-calculate approximate gross from known net
+      }
+    }
+
+    return converted;
   }
 
   function getNetPriceInBRL(sale: any) {
