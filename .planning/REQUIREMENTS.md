@@ -24,6 +24,7 @@
 - [x] **CALC-02**: Calcular Faturamento Líquido (Bruto - taxas da plataforma/afiliados).
 - [x] **CALC-03**: Calcular Lucro (Líquido - Gasto em Ads - Despesas extras).
 - [x] **CALC-04**: Calcular ROAS, ROI, CPA e Margem.
+- [ ] **CALC-05**: Converter vendas em múltiplas moedas para a moeda base do projeto (BRL) usando taxas de câmbio.
 
 ### Banco de Dados
 
@@ -76,10 +77,11 @@
 | UI-04 | Phase 5 | Complete |
 | HOT-04 | Phase 6 | Pending |
 | UI-05 | Phase 7 | Pending |
+| CALC-05 | Phase 8 | Pending |
 
 **Coverage:**
-- v1 requirements: 18 total
-- Mapped to phases: 18
+- v1 requirements: 19 total
+- Mapped to phases: 19
 - Unmapped: 0 ✓
 
 ---

@@ -9,8 +9,9 @@
 | 3 | Core Metrics Engine | Processar eventos de vendas e gastos para calcular as métricas exatas. | CALC-01, CALC-02, CALC-03, CALC-04 | 2 |
 | 4 | Dashboard UI | Exibir as informações consolidadas visualmente para o usuário com atualizações periódicas. | UI-01, UI-02, UI-03 | 2 |
 | 5 | Date Range Picker Avançado | Substituir o seletor de datas simples por um calendário interativo estilo Facebook, com opções predefinidas e seleção customizada. | UI-04 | 2 |
-| 6 | Importação de Histórico Hotmart | 3/3 | Complete   | 2026-09-07 |
+| 6 | Importação de Histórico Hotmart | Criar um endpoint e UI para importar o histórico de vendas passadas via API REST da Hotmart, não só os eventos futuros do webhook. | HOT-04 | 2 |
 | 7 | Filtro por Produto | Adicionar filtro de produto ao dashboard para visualizar métricas isoladas por produto vendido. | UI-05 | 2 |
+| 8 | Conversão de Moedas | Adicionar coluna currency e converter moedas locais para a moeda base (BRL) usando taxas de câmbio dinâmicas no dashboard. | CALC-05 | 2 |
 
 ## Phase Details
 
@@ -88,3 +89,13 @@ Plans:
 - [ ] 07-03-PLAN.md — Persistência do produto no import de histórico e no webhook (com backfill via UPSERT)
 - [ ] 07-04-PLAN.md — GET /api/products + parâmetro productId validado em GET /api/metrics
 - [ ] 07-05-PLAN.md — Componente ProductFilter no header e ligação ponta a ponta no dashboard
+
+### Phase 8: Conversão de Moedas
+**Goal**: Adicionar coluna currency e converter moedas locais para a moeda base (BRL) usando taxas de câmbio dinâmicas no dashboard.
+**Requirements**: CALC-05
+**Depends on**: Phase 3
+**Success criteria**:
+1. Migração adicionando a coluna `currency` na tabela `sales`.
+2. O webhook e a sincronização do histórico salvam a moeda da venda.
+3. O dashboard ou backend busca taxas de câmbio atualizadas (ex: via API de Exchange Rates gratuita) e converte todas as vendas para a moeda base na hora de calcular o Faturamento e Lucro.
+4. Os valores apresentados deixam de ter distorções por soma de moedas diferentes.
