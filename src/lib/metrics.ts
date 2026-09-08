@@ -7,18 +7,30 @@ export function calculateMetrics(
   rates: Record<string, number> = { BRL: 1 }
 ) {
   function getPriceInBRL(sale: any) {
-    const price = Number(sale.price);
+    const price = Number(sale.price) || 0;
     const currency = (sale.currency || 'BRL').toUpperCase();
-    const rate = rates[currency];
-    const converted = (rate && rate > 0) ? price / rate : price;
+    let converted = price;
 
-    // Safety: if conversion yields a value >5x the net_revenue (which Hotmart pays in BRL),
-    // the sale was likely imported before the currency column existed (stored as 'BRL' but
-    // price is actually in a foreign currency). Fall back to net_revenue / 0.901.
+    if (currency !== 'BRL') {
+      const rate = rates[currency];
+      if (rate && rate > 0) {
+        converted = price / rate;
+      } else {
+        // Se a API de câmbio falhar ou não tiver a moeda, NUNCA some o valor bruto estrangeiro como BRL.
+        // Calcula o bruto retroativamente usando o valor líquido (que a Hotmart já entrega em BRL).
+        if (sale.net_revenue) {
+          converted = Number(sale.net_revenue) / 0.901;
+        } else {
+          converted = 0; 
+        }
+      }
+    }
+
+    // Safety: se a conversão gerar um valor absurdamente maior que o líquido (ex: erro de câmbio ARS/COP)
     if (sale.net_revenue !== null && sale.net_revenue !== undefined) {
-      const netBRL = Number(sale.net_revenue); // already in BRL from Hotmart
-      if (netBRL > 0 && converted > netBRL * 5) {
-        return netBRL / 0.901; // back-calculate approximate gross from known net
+      const netBRL = Number(sale.net_revenue);
+      if (netBRL > 0 && converted > netBRL * 4) {
+        return netBRL / 0.901; 
       }
     }
 
