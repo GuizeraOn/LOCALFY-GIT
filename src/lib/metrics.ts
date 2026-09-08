@@ -26,10 +26,12 @@ export function calculateMetrics(
       }
     }
 
-    // Safety: se a conversão gerar um valor absurdamente maior que o líquido (ex: erro de câmbio ARS/COP)
+    // Safety: se a conversão gerar um valor muito maior que o líquido 
+    // (ex: erros cambiais severos, vendas com coprodutor/afiliado onde o Gross seria inflado)
+    // O Bruto NUNCA deve ser maior que ~1.5x o valor Líquido do produtor na Hotmart.
     if (sale.net_revenue !== null && sale.net_revenue !== undefined) {
       const netBRL = Number(sale.net_revenue);
-      if (netBRL > 0 && converted > netBRL * 4) {
+      if (netBRL > 0 && converted > netBRL * 1.5) {
         return netBRL / 0.901; 
       }
     }

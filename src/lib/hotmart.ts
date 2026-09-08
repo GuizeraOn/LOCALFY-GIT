@@ -262,12 +262,9 @@ export function mapHotmartItem(item: unknown): MappedHotmartSale | null {
       netRevenue = Number(prodCommission.value);
     }
   }
-  if (netRevenue === null && record.hotmart_fee) {
-    const fee = asRecord(record.hotmart_fee);
-    if (fee.total !== undefined) {
-      netRevenue = price - Number(fee.total);
-    }
-  }
+  // Removed dangerous subtraction: `netRevenue = price - fee.total`.
+  // Hotmart fee.total is often in BRL/USD/EUR even when price is in ARS/COP.
+  // Subtracting them directly creates wildly incorrect net_revenue values.
 
   const payment_type =
     toCleanString(asRecord(purchase.payment).type) ??

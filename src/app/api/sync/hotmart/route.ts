@@ -167,23 +167,53 @@ export async function POST(request: Request) {
     const mapped = dedupeMappedSales(survivors);
 
     // 10. Persist — sales first (FK constraint: sale_utms.transaction_id references sales)
+    // 10. Fetch existing sales to preserve webhook data (which has accurate commissions)
+    // History API usually doesn't return commissions, so if we just upsert we'll overwrite
+    // accurate net_revenue with null.
+    const transactionIds = mapped.map(m => m.sale.transaction_id);
+    let existingMap = new Map<string, any>();
+    if (transactionIds.length > 0) {
+      const { data: existingSales } = await supabaseServerClient
+        .from('sales')
+        .select('transaction_id, net_revenue, product_id, product_name, price, currency')
+        .in('transaction_id', transactionIds);
+      if (existingSales) {
+        existingMap = new Map(existingSales.map(s => [s.transaction_id, s]));
+      }
+    }
+
     const updatedAt = new Date().toISOString();
-    const saleRows: SaleRow[] = mapped.map((m) => ({
-      transaction_id: m.sale.transaction_id,
-      status: m.sale.status,
-      price: m.sale.price,
-      currency: m.sale.currency,
-      net_revenue: m.sale.net_revenue,
-      payment_type: m.sale.payment_type,
-      country: m.sale.country,
-      hsrc: m.sale.hsrc,
-      product_id: m.sale.product_id,
-      product_name: m.sale.product_name,
-      updated_at: updatedAt,
-      // Explicit null prevents Postgres DEFAULT NOW() on INSERT; UPDATE preserves correct
-      // existing dates when we re-import and the API still provides no date for that row.
-      created_at: m.sale.created_at,
-    }));
+    const saleRows: SaleRow[] = mapped.map((m) => {
+      const ext = existingMap.get(m.sale.transaction_id);
+      
+      // Preserve net_revenue if History API didn't provide it but Webhook did
+      let finalNet = m.sale.net_revenue;
+      if (finalNet === null && ext?.net_revenue !== null && ext?.net_revenue !== undefined) {
+        finalNet = ext.net_revenue;
+      }
+
+      // Preserve product info if History API is missing it
+      let finalProductId = m.sale.product_id;
+      if (!finalProductId && ext?.product_id) finalProductId = ext.product_id;
+      
+      let finalProductName = m.sale.product_name;
+      if (!finalProductName && ext?.product_name) finalProductName = ext.product_name;
+
+      return {
+        transaction_id: m.sale.transaction_id,
+        status: m.sale.status,
+        price: m.sale.price,
+        currency: m.sale.currency,
+        net_revenue: finalNet,
+        payment_type: m.sale.payment_type,
+        country: m.sale.country,
+        hsrc: m.sale.hsrc,
+        product_id: finalProductId,
+        product_name: finalProductName,
+        updated_at: updatedAt,
+        created_at: m.sale.created_at,
+      };
+    });
 
     if (saleRows.length > 0) {
       const { error: saleError } = await supabaseServerClient
