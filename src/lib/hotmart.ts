@@ -6,6 +6,7 @@ export interface HotmartSaleRow {
   status: string;
   price: number;
   currency: string;
+  net_revenue: number | null;
   created_at: string | null; // ISO 8601 UTC, null when Hotmart gave no usable date
   product_id: string | null;   // null when Hotmart response has no product info
   product_name: string | null; // null when Hotmart response has no product info
@@ -251,6 +252,20 @@ export function mapHotmartItem(item: unknown): MappedHotmartSale | null {
     toCleanString(record.currency) ??
     'BRL';
 
+  let netRevenue: number | null = null;
+  if (Array.isArray(purchase.commissions)) {
+    const prodCommission = purchase.commissions.find((c: any) => c.source === 'PRODUCER');
+    if (prodCommission && prodCommission.value !== undefined) {
+      netRevenue = Number(prodCommission.value);
+    }
+  }
+  if (netRevenue === null && record.hotmart_fee) {
+    const fee = asRecord(record.hotmart_fee);
+    if (fee.total !== undefined) {
+      netRevenue = price - Number(fee.total);
+    }
+  }
+
   const createdAt =
     toIsoDate(purchase.order_date) ??
     toIsoDate(purchase.approved_date) ??
@@ -285,6 +300,7 @@ export function mapHotmartItem(item: unknown): MappedHotmartSale | null {
       status,
       price,
       currency,
+      net_revenue: netRevenue,
       created_at: createdAt ?? null,
       product_id,
       product_name,

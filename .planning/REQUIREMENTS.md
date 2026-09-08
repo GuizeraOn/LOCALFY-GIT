@@ -25,7 +25,7 @@
 - [x] **CALC-03**: Calcular Lucro (Líquido - Gasto em Ads - Despesas extras).
 - [x] **CALC-04**: Calcular ROAS, ROI, CPA e Margem.
 - [x] **CALC-05**: Converter vendas em múltiplas moedas para a moeda base do projeto (BRL) usando taxas de câmbio.
-- [ ] **CALC-06**: Extrair e salvar a comissão real ou descontar `hotmart_fee` do preço bruto para calcular Faturamento Líquido preciso.
+- [x] **CALC-06**: Extrair e salvar a comissão real ou descontar `hotmart_fee` do preço bruto para calcular Faturamento Líquido preciso.
 
 ### Banco de Dados
 

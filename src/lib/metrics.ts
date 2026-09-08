@@ -16,11 +16,24 @@ export function calculateMetrics(
     return price;
   }
 
+  function getNetPriceInBRL(sale: any) {
+    let net = sale.net_revenue !== null && sale.net_revenue !== undefined 
+      ? Number(sale.net_revenue) 
+      : Number(sale.price) * 0.901; // Fallback de 9.9% de taxa
+
+    const currency = sale.currency || 'BRL';
+    const rate = rates[currency];
+    if (rate && rate > 0) {
+      return net / rate;
+    }
+    return net;
+  }
+
   // Global Metrics
   const approvedSales = sales.filter(s => s.status === 'APPROVED' || s.status === 'COMPLETED');
   
   const grossRevenue = approvedSales.reduce((acc, sale) => acc + getPriceInBRL(sale), 0);
-  const netRevenue = grossRevenue; // Sem desconto da Hotmart assumido aqui
+  const netRevenue = approvedSales.reduce((acc, sale) => acc + getNetPriceInBRL(sale), 0);
   
   // O gasto total em ads recebe o imposto (ex: 13%)
   const rawAdSpend = adSpends.reduce((acc, ad) => acc + Number(ad.spend), 0);
@@ -49,6 +62,7 @@ export function calculateMetrics(
         clicks: 0,
         salesCount: 0,
         grossRevenue: 0,
+        netRevenue: 0,
       };
     }
     // Aplica o imposto no gasto da campanha também
@@ -63,12 +77,13 @@ export function calculateMetrics(
     if (cid && campaignStats[cid]) {
       campaignStats[cid].salesCount += 1;
       campaignStats[cid].grossRevenue += getPriceInBRL(sale);
+      campaignStats[cid].netRevenue += getNetPriceInBRL(sale);
     }
   });
 
   // Calculate campaign metrics
   const campaigns = Object.values(campaignStats).map(c => {
-    const cNetRevenue = c.grossRevenue;
+    const cNetRevenue = c.netRevenue;
     const cProfit = cNetRevenue - c.spend;
     const cRoas = c.spend > 0 ? cNetRevenue / c.spend : 0;
     const cRoi = c.spend > 0 ? (cProfit / c.spend) * 100 : 0;

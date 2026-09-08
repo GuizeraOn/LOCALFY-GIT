@@ -23,6 +23,21 @@ export async function POST(request: Request) {
     const price = payload.price || payload.data?.price || payload.purchase?.price?.value || 0;
     const currency = payload.currency || payload.data?.currency || payload.purchase?.price?.currency_code || 'BRL';
     
+    let netRevenue: number | null = null;
+    const commissions = payload.commissions || payload.data?.commissions || payload.purchase?.commissions;
+    if (Array.isArray(commissions)) {
+      const prodCommission = commissions.find((c: any) => c.source === 'PRODUCER');
+      if (prodCommission && prodCommission.value !== undefined) {
+        netRevenue = Number(prodCommission.value);
+      }
+    }
+    if (netRevenue === null) {
+      const fee = payload.hotmart_fee || payload.data?.hotmart_fee;
+      if (fee?.total !== undefined) {
+        netRevenue = Number(price) - Number(fee.total);
+      }
+    }
+    
     // UTMs
     const utm_source = payload.utm_source || payload.data?.utm_source || null;
     const utm_campaign = payload.utm_campaign || payload.data?.utm_campaign || null;
@@ -44,6 +59,7 @@ export async function POST(request: Request) {
         status: status || 'UNKNOWN',
         price: Number(price),
         currency,
+        net_revenue: netRevenue,
         updated_at: new Date().toISOString()
       }, {
         onConflict: 'transaction_id'
