@@ -31,8 +31,8 @@ const globalMetrics = {
   // Funil de Tráfego (FB Ads)
   clicks: adSpends.reduce((acc, ad) => acc + Number(ad.clicks), 0),
   impressions: adSpends.reduce((acc, ad) => acc + Number(ad.impressions), 0),
-  pageviews: 0, // Mockado por enquanto se não houver track
-  initiateCheckouts: 0, // Mockado
+  pageviews: adSpends.reduce((acc, ad) => acc + Number(ad.pageviews || 0), 0),
+  initiateCheckouts: adSpends.reduce((acc, ad) => acc + Number(ad.initiate_checkouts || 0), 0),
   vendasIniciadas: sales.length, // Todas as transações recebidas (incluindo BILLET_PRINTED)
   vendasAprovadas: approvedSales.length, // Apenas APPROVED/COMPLETED
   

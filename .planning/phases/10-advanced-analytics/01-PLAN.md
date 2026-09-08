@@ -32,6 +32,10 @@ ALTER TABLE public.sales
   ADD COLUMN IF NOT EXISTS payment_type TEXT,
   ADD COLUMN IF NOT EXISTS country TEXT,
   ADD COLUMN IF NOT EXISTS hsrc TEXT;
+
+ALTER TABLE public.ad_spend 
+  ADD COLUMN IF NOT EXISTS pageviews INTEGER DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS initiate_checkouts INTEGER DEFAULT 0;
 ```
 </action>
 

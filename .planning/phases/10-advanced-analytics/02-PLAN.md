@@ -73,3 +73,33 @@ Observação: A Hotmart envia eventos como `CHARGEBACK`, `REFUNDED`, `CANCELED`.
 - Webhook repassa novas colunas no upsert.
 </acceptance_criteria>
 </task>
+
+### src/app/api/sync/facebook/route.ts
+<task type="execute" autonomous="true">
+<read_first>
+- `src/app/api/sync/facebook/route.ts`
+</read_first>
+
+<action>
+1. Atualize a URL do Graph API para incluir o campo `actions`:
+```typescript
+const fbUrl = `https://graph.facebook.com/v19.0/act_${FB_AD_ACCOUNT_ID}/insights?time_range={'since':'${startDate}','until':'${endDate}'}&level=campaign&fields=campaign_id,campaign_name,spend,impressions,clicks,actions&time_increment=1&access_token=${FB_ACCESS_TOKEN}`;
+```
+2. No loop de `insights`, extraia `landing_page_view` e `checkouts_initiated` (ou `onsite_conversion.messaging_first_reply` caso use lead, mas para vendas é `offsite_conversion.fb_pixel_initiate_checkout` ou só `checkouts_initiated` dependendo da action_type do array de actions). Exemplo de extração genérica:
+```typescript
+let pageviews = 0;
+let initiate_checkouts = 0;
+if (Array.isArray(item.actions)) {
+  item.actions.forEach((a: any) => {
+    if (a.action_type === 'landing_page_view') pageviews += Number(a.value || 0);
+    if (a.action_type === 'offsite_conversion.fb_pixel_initiate_checkout' || a.action_type === 'checkouts_initiated') initiate_checkouts += Number(a.value || 0);
+  });
+}
+```
+3. Adicione as duas variáveis no `.upsert` de `ad_spend`.
+</action>
+<acceptance_criteria>
+- A API do FB busca a propriedade `actions`.
+- Extrai e salva pageviews e ICs no banco.
+</acceptance_criteria>
+</task>
