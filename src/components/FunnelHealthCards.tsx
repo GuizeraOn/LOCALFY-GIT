@@ -135,8 +135,7 @@ export function FunnelHealthCards({ global }: FunnelHealthProps) {
                   labelStyle={{ color: '#a1a1aa', marginBottom: 4 }}
                   formatter={(val: any, name: any, props: any) => {
                     if (name === 'pad') return []; // Esconde o pad no tooltip
-                    const d = funnelData[props.dataKey === 'value' ? props.index : 0];
-                    return [fmtNum(val) + ` (${d.pctLabel})`, 'Volume'];
+                    return [fmtNum(val) + ` (${props.payload?.pctLabel || ''})`, 'Volume'];
                   }}
                 />
                 {/* Preenchimento invisível inferior para centralizar a área visível */}
