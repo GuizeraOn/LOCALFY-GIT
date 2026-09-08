@@ -86,9 +86,15 @@ export function calculateMetrics(
     .map(([name, value]) => ({ name, value }));
 
   // ── Chart: Approval Rate by Payment Method ──────────────────────────────────
+  // Only count statuses that represent a genuine payment attempt
+  const PAYMENT_ATTEMPT_STATUSES = new Set([
+    'APPROVED', 'COMPLETED', 'REFUSED', 'DECLINED', 'ERROR',
+    'BILLET_PRINTED', 'WAITING_PAYMENT', 'DELAYED', 'EXPIRED',
+  ]);
   const methodTotal: Record<string, number> = {};
   const methodApproved: Record<string, number> = {};
   sales.forEach(s => {
+    if (!PAYMENT_ATTEMPT_STATUSES.has(s.status)) return; // skip refunds/chargebacks/canceled
     const pt = s.payment_type || 'Desconhecido';
     methodTotal[pt] = (methodTotal[pt] || 0) + 1;
     if (s.status === 'APPROVED' || s.status === 'COMPLETED') {

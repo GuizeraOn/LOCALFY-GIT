@@ -16,15 +16,47 @@ export async function POST(request: Request) {
 
     const payload = await request.json();
 
-    // Hotmart new webhook format wraps data inside a "data" property usually, or sends it flat.
-    // Let's assume a generic shape based on standard Hotmart payloads:
-    const transaction = payload.transaction || payload.data?.transaction || payload.purchase?.transaction;
-    const status = payload.status || payload.data?.status || payload.event;
-    const price = payload.price || payload.data?.price || payload.purchase?.price?.value || 0;
-    const currency = payload.currency || payload.data?.currency || payload.purchase?.price?.currency_code || 'BRL';
-    const payment_type = payload.payment_type || payload.data?.payment?.type || payload.purchase?.payment?.type || null;
-    const country = payload.buyer_country || payload.data?.buyer?.country?.iso || payload.purchase?.buyer?.country?.iso || null;
-    const hsrc = payload.sck || payload.src || payload.data?.purchase?.sck || payload.purchase?.src || null;
+    // Hotmart new webhook format: { event, data: { purchase: { transaction, status, payment, ... } } }
+    // Also handle legacy flat payloads.
+    const purchaseData = payload.data?.purchase ?? payload.purchase ?? payload;
+
+    const transaction = 
+      purchaseData?.transaction ??
+      payload.data?.transaction ??
+      payload.transaction;
+
+    // Prefer the explicit status inside purchase data; fall back to event name normalization
+    const rawStatus: string = (
+      purchaseData?.status ??
+      payload.data?.status ??
+      payload.status ??
+      payload.event ??
+      'UNKNOWN'
+    ).toUpperCase();
+
+    // Map Hotmart event names → clean internal status values
+    const STATUS_MAP: Record<string, string> = {
+      PURCHASE_APPROVED:  'APPROVED',
+      PURCHASE_COMPLETE:  'COMPLETED',
+      PURCHASE_COMPLETED: 'COMPLETED',
+      PURCHASE_CANCELED:  'CANCELED',
+      PURCHASE_CANCELLED: 'CANCELED',
+      PURCHASE_REFUNDED:  'REFUNDED',
+      PURCHASE_REFUSED:   'REFUSED',
+      PURCHASE_DELAYED:   'DELAYED',
+      PURCHASE_EXPIRED:   'EXPIRED',
+      PURCHASE_PROTEST:   'CHARGEBACK',
+      PURCHASE_CHARGEBACK:'CHARGEBACK',
+      BILLET_PRINTED:     'BILLET_PRINTED',
+      WAITING_PAYMENT:    'WAITING_PAYMENT',
+    };
+    const status = STATUS_MAP[rawStatus] ?? rawStatus;
+
+    const price = purchaseData?.price?.value ?? payload.data?.price ?? payload.price ?? 0;
+    const currency = purchaseData?.price?.currency_code ?? payload.data?.currency ?? payload.currency ?? 'BRL';
+    const payment_type = purchaseData?.payment?.type ?? payload.data?.payment?.type ?? payload.payment_type ?? null;
+    const country = purchaseData?.buyer?.country?.iso ?? payload.data?.buyer?.country?.iso ?? payload.buyer_country ?? null;
+    const hsrc = purchaseData?.sck ?? purchaseData?.src ?? payload.sck ?? payload.src ?? null;
     
     let netRevenue: number | null = null;
     const commissions = payload.commissions || payload.data?.commissions || payload.purchase?.commissions;
