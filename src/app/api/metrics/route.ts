@@ -18,8 +18,8 @@ export async function GET(request: Request) {
     const { data: sales, error: salesError } = await supabaseServerClient
       .from('sales')
       .select('*, sale_utms(*)')
-      .gte('created_at', `${startDate}T00:00:00.000Z`)
-      .lte('created_at', `${endDate}T23:59:59.999Z`);
+      .gte('created_at', `${startDate}T00:00:00.000-03:00`)
+      .lte('created_at', `${endDate}T23:59:59.999-03:00`);
 
     if (salesError) throw salesError;
 
