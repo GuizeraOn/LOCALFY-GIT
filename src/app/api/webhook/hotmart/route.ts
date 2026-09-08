@@ -57,6 +57,8 @@ export async function POST(request: Request) {
     const payment_type = purchaseData?.payment?.type ?? payload.data?.payment?.type ?? payload.payment_type ?? null;
     const country = purchaseData?.buyer?.country?.iso ?? payload.data?.buyer?.country?.iso ?? payload.buyer_country ?? null;
     const hsrc = purchaseData?.sck ?? purchaseData?.src ?? payload.sck ?? payload.src ?? null;
+    const product_id = String(payload.data?.product?.id ?? payload.product?.id ?? payload.product?.ucode ?? payload.product_id ?? '');
+    const product_name = payload.data?.product?.name ?? payload.product?.name ?? payload.product_name ?? null;
     
     let netRevenue: number | null = null;
     const commissions = payload.commissions || payload.data?.commissions || payload.purchase?.commissions;
@@ -98,6 +100,8 @@ export async function POST(request: Request) {
         payment_type,
         country,
         hsrc,
+        product_id: product_id ? product_id : null,
+        product_name,
         updated_at: new Date().toISOString()
       }, {
         onConflict: 'transaction_id'
