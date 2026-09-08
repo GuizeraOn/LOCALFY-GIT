@@ -56,10 +56,16 @@ export async function POST(request: Request) {
     }
 
     // 2. Check token — never echo it
-    const token = process.env.HOTMART_ACCESS_TOKEN?.trim();
+    let token = process.env.HOTMART_ACCESS_TOKEN?.trim();
     if (!token) {
       console.warn('Missing HOTMART_ACCESS_TOKEN environment variable.');
       return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
+    }
+    // Hotmart expects the token URL-encoded (with %2B, %2F, %3D).
+    // Vercel may auto-decode env vars, turning %2B→+ and %3D→=.
+    // If the token contains decoded chars (+, /, =) but no %, re-encode it.
+    if (!token.includes('%') && (token.includes('+') || token.includes('/') || token.includes('='))) {
+      token = encodeURIComponent(token);
     }
     console.log(`[hotmart-sync] Token length: ${token.length}, Starts with: ${token.substring(0, 5)}... Ends with: ...${token.substring(token.length - 5)}`);
 
