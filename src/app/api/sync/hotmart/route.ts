@@ -101,14 +101,14 @@ export async function POST(request: Request) {
       },
     });
 
-    // 7. Handle non-ok response — never leak error body to client
+    // 7. Handle non-ok response
     if (!response.ok) {
       const errorText = await response.text();
       console.error('Hotmart API Error:', response.status, errorText);
       if (response.status === 401 || response.status === 403) {
-        return NextResponse.json({ error: 'Hotmart authentication failed' }, { status: 401 });
+        return NextResponse.json({ error: 'Hotmart authentication failed', detail: errorText }, { status: 401 });
       }
-      return NextResponse.json({ error: 'Failed to fetch from Hotmart' }, { status: 502 });
+      return NextResponse.json({ error: 'Failed to fetch from Hotmart', hotmart_status: response.status, detail: errorText }, { status: 502 });
     }
 
     // 8. Parse JSON
