@@ -60,18 +60,24 @@ export async function POST(request: Request) {
     const product_id = String(payload.data?.product?.id ?? payload.product?.id ?? payload.product?.ucode ?? payload.product_id ?? '');
     const product_name = payload.data?.product?.name ?? payload.product?.name ?? payload.product_name ?? null;
     
+    // net_revenue is stored in BRL (Hotmart's payout currency for Brazilian producers).
+    // For international products, Hotmart provides converted_value (BRL) alongside
+    // value (in the transaction currency). We prefer converted_value so the DB always
+    // holds a BRL amount that metrics.ts can use directly without exchange rate conversion.
     let netRevenue: number | null = null;
-    const commissions = payload.commissions || payload.data?.commissions || payload.purchase?.commissions;
+    const commissions =
+      payload.data?.purchase?.commissions ??
+      payload.data?.commissions ??
+      payload.commissions ??
+      payload.purchase?.commissions;
     if (Array.isArray(commissions)) {
-      const prodCommission = commissions.find((c: any) => c.source === 'PRODUCER');
-      if (prodCommission && prodCommission.value !== undefined) {
-        netRevenue = Number(prodCommission.value);
-      }
-    }
-    if (netRevenue === null) {
-      const fee = payload.hotmart_fee || payload.data?.hotmart_fee;
-      if (fee?.total !== undefined) {
-        netRevenue = Number(price) - Number(fee.total);
+      const prodCommission = commissions.find((c: any) =>
+        c.source === 'PRODUCER' || c.commission_type === 'PRODUCER'
+      );
+      if (prodCommission) {
+        // Prefer BRL converted amount; fall back to raw value (may be in transaction currency)
+        const brl = prodCommission.converted_value ?? prodCommission.value_in_brl ?? prodCommission.value;
+        if (brl !== undefined) netRevenue = Number(brl);
       }
     }
     

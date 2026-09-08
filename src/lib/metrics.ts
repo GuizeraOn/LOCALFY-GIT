@@ -40,14 +40,18 @@ export function calculateMetrics(
   }
 
   function getNetPriceInBRL(sale: any) {
-    let net = sale.net_revenue !== null && sale.net_revenue !== undefined
-      ? Number(sale.net_revenue)
-      : Number(sale.price) * 0.901; // Fallback 9.9% taxa Hotmart
-
-    const currency = sale.currency || 'BRL';
+    // net_revenue is stored in BRL (from Hotmart commissions API or webhook converted_value).
+    // Do NOT apply the exchange rate — it would double-convert the already-BRL amount.
+    if (sale.net_revenue !== null && sale.net_revenue !== undefined) {
+      return Number(sale.net_revenue);
+    }
+    // Fallback when no net_revenue: convert price from transaction currency then apply ~9.9% Hotmart fee.
+    const price = Number(sale.price);
+    const currency = (sale.currency || 'BRL').toUpperCase();
+    if (currency === 'BRL') return price * 0.901;
     const rate = rates[currency];
-    if (rate && rate > 0) return net / rate;
-    return net;
+    if (rate && rate > 0) return (price / rate) * 0.901;
+    return 0;
   }
 
   // ── Global Filters ──────────────────────────────────────────────────────────

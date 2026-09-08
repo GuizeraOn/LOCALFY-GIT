@@ -11,6 +11,97 @@ import {
   type MappedHotmartSale,
 } from '@/lib/hotmart';
 
+const HOTMART_COMMISSIONS_URL = 'https://developers.hotmart.com/payments/api/v1/sales/commissions';
+
+// ---------------------------------------------------------------------------
+// Fetch a single Hotmart URL with the Bearer token, returning raw body string.
+// ---------------------------------------------------------------------------
+function hotmartGet(token: string, url: string): Promise<{ ok: boolean; status: number; body: string }> {
+  const parsed = new URL(url);
+  return new Promise((resolve, reject) => {
+    const req = https.request({
+      hostname: parsed.hostname,
+      path: parsed.pathname + parsed.search,
+      method: 'GET',
+      headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+    }, (res) => {
+      let data = '';
+      res.on('data', (chunk) => { data += chunk; });
+      res.on('end', () => resolve({ ok: res.statusCode! >= 200 && res.statusCode! < 300, status: res.statusCode!, body: data }));
+    });
+    req.on('error', reject);
+    req.end();
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Fetch all Hotmart commissions for a date range.
+// Returns a map of transaction_id → net_revenue_in_BRL.
+// Best-effort: returns empty map on any error so it never breaks the sync.
+// ---------------------------------------------------------------------------
+async function fetchCommissionsBRL(
+  token: string,
+  startDateMs: number,
+  endDateMs: number,
+): Promise<Map<string, number>> {
+  const map = new Map<string, number>();
+  let pageToken: string | null = null;
+
+  try {
+    do {
+      const urlObj = new URL(HOTMART_COMMISSIONS_URL);
+      urlObj.searchParams.set('start_date', String(startDateMs));
+      urlObj.searchParams.set('end_date', String(endDateMs));
+      urlObj.searchParams.set('max_results', '50');
+      if (pageToken) urlObj.searchParams.set('page_token', pageToken);
+
+      const resp = await hotmartGet(token, urlObj.toString());
+      if (!resp.ok) {
+        console.warn('[hotmart-sync] commissions API returned', resp.status, '— skipping net_revenue enrichment');
+        break;
+      }
+
+      const payload: any = JSON.parse(resp.body);
+      const items: any[] = payload.items ?? payload.data ?? [];
+
+      if (items.length > 0) {
+        console.log('[hotmart-sync] commissions sample item:', JSON.stringify(items[0]));
+      }
+
+      for (const item of items) {
+        const txn: string | undefined = item.transaction ?? item.purchase?.transaction;
+        if (!txn) continue;
+
+        // Format A: flat item with commission_type / source === 'PRODUCER'
+        if (item.commission_type === 'PRODUCER' || item.source === 'PRODUCER') {
+          // Try known field names for the BRL payout amount
+          const brl = item.converted_value ?? item.value_in_brl ?? item.net ?? item.total ?? null;
+          if (brl != null && !map.has(txn)) map.set(txn, Number(brl));
+          continue;
+        }
+
+        // Format B: item has a commissions array (one row per producer/affiliate)
+        if (Array.isArray(item.commissions)) {
+          const prod = item.commissions.find((c: any) =>
+            c.source === 'PRODUCER' || c.commission_type === 'PRODUCER'
+          );
+          if (prod) {
+            const brl = prod.converted_value ?? prod.value_in_brl ?? prod.net ?? prod.total ?? null;
+            if (brl != null && !map.has(txn)) map.set(txn, Number(brl));
+          }
+        }
+      }
+
+      pageToken = payload.page_info?.next_page_token ?? null;
+    } while (pageToken);
+  } catch (err) {
+    console.error('[hotmart-sync] Error fetching commissions:', err);
+  }
+
+  console.log(`[hotmart-sync] commissions enrichment: ${map.size} BRL net values fetched`);
+  return map;
+}
+
 // ---------------------------------------------------------------------------
 // Local row type — keeps created_at optional so we can omit it when null
 // ---------------------------------------------------------------------------
@@ -103,28 +194,8 @@ export async function POST(request: Request) {
     const url = buildSalesHistoryUrl({ startDateMs, endDateMs, pageToken, maxResults: 50 });
     console.log(`[hotmart-sync] Fetching URL: ${url}`);
 
-    // 6. Call Hotmart API using native https (Next.js patches fetch and adds
-    //    headers that Hotmart rejects with 400 invalid_parameter)
-    const parsedUrl = new URL(url);
-    const hotmartResponse = await new Promise<{ ok: boolean; status: number; body: string }>((resolve, reject) => {
-      const req = https.request({
-        hostname: parsedUrl.hostname,
-        path: parsedUrl.pathname + parsedUrl.search,
-        method: 'GET',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          Accept: 'application/json',
-        },
-      }, (res) => {
-        let data = '';
-        res.on('data', (chunk) => { data += chunk; });
-        res.on('end', () => {
-          resolve({ ok: res.statusCode! >= 200 && res.statusCode! < 300, status: res.statusCode!, body: data });
-        });
-      });
-      req.on('error', reject);
-      req.end();
-    });
+    // 6. Call Hotmart History API (uses shared helper — no extra boilerplate)
+    const hotmartResponse = await hotmartGet(token, url);
 
     // 7. Handle non-ok response
     if (!hotmartResponse.ok) {
@@ -166,10 +237,11 @@ export async function POST(request: Request) {
     }
     const mapped = dedupeMappedSales(survivors);
 
-    // 10. Persist — sales first (FK constraint: sale_utms.transaction_id references sales)
-    // 10. Fetch existing sales to preserve webhook data (which has accurate commissions)
-    // History API usually doesn't return commissions, so if we just upsert we'll overwrite
-    // accurate net_revenue with null.
+    // 10. Fetch Hotmart commissions to get accurate BRL net_revenue values.
+    //     This runs in parallel with the DB fetch below — best-effort, never blocks sync.
+    const commissionsBRL = await fetchCommissionsBRL(token, startDateMs, endDateMs);
+
+    // 10b. Fetch existing sales to preserve webhook data and product info.
     const transactionIds = mapped.map(m => m.sale.transaction_id);
     let existingMap = new Map<string, any>();
     if (transactionIds.length > 0) {
@@ -185,9 +257,13 @@ export async function POST(request: Request) {
     const updatedAt = new Date().toISOString();
     const saleRows: SaleRow[] = mapped.map((m) => {
       const ext = existingMap.get(m.sale.transaction_id);
-      
-      // Preserve net_revenue if History API didn't provide it but Webhook did
-      let finalNet = m.sale.net_revenue;
+      const txId = m.sale.transaction_id;
+
+      // Priority: 1) Hotmart commissions API (BRL amount, most accurate)
+      //           2) History API commission field (if present)
+      //           3) Existing DB value (from webhook or previous sync)
+      let finalNet: number | null = commissionsBRL.get(txId) ?? null;
+      if (finalNet === null) finalNet = m.sale.net_revenue;
       if (finalNet === null && ext?.net_revenue !== null && ext?.net_revenue !== undefined) {
         finalNet = ext.net_revenue;
       }
