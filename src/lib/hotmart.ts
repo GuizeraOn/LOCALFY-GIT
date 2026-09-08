@@ -5,6 +5,7 @@ export interface HotmartSaleRow {
   transaction_id: string;
   status: string;
   price: number;
+  currency: string;
   created_at: string | null; // ISO 8601 UTC, null when Hotmart gave no usable date
   product_id: string | null;   // null when Hotmart response has no product info
   product_name: string | null; // null when Hotmart response has no product info
@@ -243,6 +244,13 @@ export function mapHotmartItem(item: unknown): MappedHotmartSale | null {
   const priceNum = Number(priceRaw);
   const price = Number.isNaN(priceNum) ? 0 : priceNum;
 
+  const currency = 
+    toCleanString(asRecord(purchase.price).currency_code) ??
+    toCleanString(asRecord(purchase.full_price).currency_code) ??
+    toCleanString(purchase.currency) ??
+    toCleanString(record.currency) ??
+    'BRL';
+
   const createdAt =
     toIsoDate(purchase.order_date) ??
     toIsoDate(purchase.approved_date) ??
@@ -276,6 +284,7 @@ export function mapHotmartItem(item: unknown): MappedHotmartSale | null {
       transaction_id: transactionId,
       status,
       price,
+      currency,
       created_at: createdAt ?? null,
       product_id,
       product_name,

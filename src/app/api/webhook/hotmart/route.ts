@@ -21,6 +21,7 @@ export async function POST(request: Request) {
     const transaction = payload.transaction || payload.data?.transaction || payload.purchase?.transaction;
     const status = payload.status || payload.data?.status || payload.event;
     const price = payload.price || payload.data?.price || payload.purchase?.price?.value || 0;
+    const currency = payload.currency || payload.data?.currency || payload.purchase?.price?.currency_code || 'BRL';
     
     // UTMs
     const utm_source = payload.utm_source || payload.data?.utm_source || null;
@@ -42,6 +43,7 @@ export async function POST(request: Request) {
         transaction_id: transaction,
         status: status || 'UNKNOWN',
         price: Number(price),
+        currency,
         updated_at: new Date().toISOString()
       }, {
         onConflict: 'transaction_id'

@@ -17,6 +17,7 @@ interface SaleRow {
   transaction_id: string;
   status: string;
   price: number;
+  currency: string;
   updated_at: string;
   created_at: string | null;
 }
@@ -143,6 +144,7 @@ export async function POST(request: Request) {
       transaction_id: m.sale.transaction_id,
       status: m.sale.status,
       price: m.sale.price,
+      currency: m.sale.currency,
       updated_at: updatedAt,
       // Explicit null prevents Postgres DEFAULT NOW() on INSERT; UPDATE preserves correct
       // existing dates when we re-import and the API still provides no date for that row.

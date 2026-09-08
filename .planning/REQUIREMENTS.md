@@ -24,7 +24,7 @@
 - [x] **CALC-02**: Calcular Faturamento Líquido (Bruto - taxas da plataforma/afiliados).
 - [x] **CALC-03**: Calcular Lucro (Líquido - Gasto em Ads - Despesas extras).
 - [x] **CALC-04**: Calcular ROAS, ROI, CPA e Margem.
-- [ ] **CALC-05**: Converter vendas em múltiplas moedas para a moeda base do projeto (BRL) usando taxas de câmbio.
+- [x] **CALC-05**: Converter vendas em múltiplas moedas para a moeda base do projeto (BRL) usando taxas de câmbio.
 
 ### Banco de Dados
 

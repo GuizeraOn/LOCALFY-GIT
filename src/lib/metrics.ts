@@ -1,10 +1,25 @@
 export const AD_TAX_PERCENTAGE = parseFloat(process.env.NEXT_PUBLIC_AD_TAX_PERCENTAGE || '0.13');
 
-export function calculateMetrics(sales: any[], adSpends: any[], expenses: any[]) {
+export function calculateMetrics(
+  sales: any[], 
+  adSpends: any[], 
+  expenses: any[],
+  rates: Record<string, number> = { BRL: 1 }
+) {
+  function getPriceInBRL(sale: any) {
+    const price = Number(sale.price);
+    const currency = sale.currency || 'BRL';
+    const rate = rates[currency];
+    if (rate && rate > 0) {
+      return price / rate;
+    }
+    return price;
+  }
+
   // Global Metrics
   const approvedSales = sales.filter(s => s.status === 'APPROVED' || s.status === 'COMPLETED');
   
-  const grossRevenue = approvedSales.reduce((acc, sale) => acc + Number(sale.price), 0);
+  const grossRevenue = approvedSales.reduce((acc, sale) => acc + getPriceInBRL(sale), 0);
   const netRevenue = grossRevenue; // Sem desconto da Hotmart assumido aqui
   
   // O gasto total em ads recebe o imposto (ex: 13%)
@@ -47,7 +62,7 @@ export function calculateMetrics(sales: any[], adSpends: any[], expenses: any[])
     const cid = sale.sale_utms?.utm_campaign;
     if (cid && campaignStats[cid]) {
       campaignStats[cid].salesCount += 1;
-      campaignStats[cid].grossRevenue += Number(sale.price);
+      campaignStats[cid].grossRevenue += getPriceInBRL(sale);
     }
   });
 

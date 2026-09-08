@@ -41,7 +41,20 @@ export async function GET(request: Request) {
 
     if (expError) throw expError;
 
-    const metrics = calculateMetrics(sales || [], adSpends || [], expenses || []);
+    let rates: Record<string, number> = { BRL: 1 };
+    try {
+      const erRes = await fetch('https://open.er-api.com/v6/latest/BRL', { next: { revalidate: 3600 } });
+      if (erRes.ok) {
+        const erData = await erRes.json();
+        if (erData && erData.rates) {
+          rates = erData.rates;
+        }
+      }
+    } catch (e) {
+      console.error('Falha ao buscar taxas de câmbio', e);
+    }
+
+    const metrics = calculateMetrics(sales || [], adSpends || [], expenses || [], rates);
 
     return NextResponse.json(metrics, { status: 200 });
 
